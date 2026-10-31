@@ -1,0 +1,14 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+runs/
+clips/
+*.sqlite*
+*.mov
+*.MOV
+*.mp4
+!docs/demo/media/window/*.mp4
+.DS_Store

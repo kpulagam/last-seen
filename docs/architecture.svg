@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720" font-family="-apple-system, Inter, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6c675f"/>
+    </marker>
+    <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff6000"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="720" fill="#f6f3ee"/>
+  <text x="40" y="52" font-size="30" font-weight="700" fill="#1b1a17">Last Seen — how a clip becomes an answer</text>
+  <text x="40" y="80" font-size="15" fill="#6c675f">Meta Model API (Muse Spark 1.3, SAM 3.1, Muse Voice Transcribe) in orange · on-device in grey · SQLite in the middle</text>
+
+  <!-- lane labels -->
+  <text x="40" y="128" font-size="13" font-weight="700" fill="#6c675f" letter-spacing="1.5">INGEST (per clip, ~$0.70)</text>
+  <text x="40" y="468" font-size="13" font-weight="700" fill="#6c675f" letter-spacing="1.5">ASK (per question, ~$0.01)</text>
+
+  <!-- ingest row -->
+  <g font-size="14" fill="#1b1a17">
+    <rect x="40" y="145" width="170" height="92" rx="12" fill="#ffffff" stroke="#e6e1d8"/>
+    <text x="125" y="176" text-anchor="middle" font-weight="700">phone clip</text>
+    <text x="125" y="197" text-anchor="middle" fill="#6c675f">ffmpeg: 1280 px CFR</text>
+    <text x="125" y="215" text-anchor="middle" fill="#6c675f">keyframes every 2 s</text>
+
+    <rect x="250" y="145" width="190" height="92" rx="12" fill="#fff3ea" stroke="#ff6000"/>
+    <text x="345" y="172" text-anchor="middle" font-weight="700" fill="#b25600">Muse Spark · grounding</text>
+    <text x="345" y="193" text-anchor="middle" fill="#6c675f">room, surfaces, every</text>
+    <text x="345" y="211" text-anchor="middle" fill="#6c675f">movable object + box</text>
+    <text x="345" y="228" text-anchor="middle" fill="#6c675f">(structured JSON)</text>
+
+    <rect x="480" y="145" width="190" height="92" rx="12" fill="#fff3ea" stroke="#ff6000"/>
+    <text x="575" y="172" text-anchor="middle" font-weight="700" fill="#b25600">SAM 3.1 · image</text>
+    <text x="575" y="193" text-anchor="middle" fill="#6c675f">box prompts, ≤16/request</text>
+    <text x="575" y="211" text-anchor="middle" fill="#6c675f">pixel masks → crops:</text>
+    <text x="575" y="228" text-anchor="middle" fill="#6c675f">object · ring · full</text>
+
+    <rect x="710" y="145" width="190" height="92" rx="12" fill="#ffffff" stroke="#e6e1d8"/>
+    <text x="805" y="172" text-anchor="middle" font-weight="700">DINOv2 (MPS)</text>
+    <text x="805" y="193" text-anchor="middle" fill="#6c675f">e_obj · e_patch · e_ring</text>
+    <text x="805" y="211" text-anchor="middle" fill="#6c675f">+ CIELAB colour</text>
+    <text x="805" y="228" text-anchor="middle" fill="#6c675f">+ crop quality</text>
+
+    <rect x="940" y="145" width="190" height="92" rx="12" fill="#ffffff" stroke="#e6e1d8"/>
+    <text x="1035" y="172" text-anchor="middle" font-weight="700">tracklets → clusters</text>
+    <text x="1035" y="193" text-anchor="middle" fill="#6c675f">same name + overlap,</text>
+    <text x="1035" y="211" text-anchor="middle" fill="#6c675f">embedding ≥ 0.65,</text>
+    <text x="1035" y="228" text-anchor="middle" fill="#6c675f">never co-seen</text>
+
+    <rect x="1170" y="145" width="190" height="92" rx="12" fill="#fff3ea" stroke="#ff6000"/>
+    <text x="1265" y="172" text-anchor="middle" font-weight="700" fill="#b25600">Muse Spark · attributes</text>
+    <text x="1265" y="193" text-anchor="middle" fill="#6c675f">one record per cluster:</text>
+    <text x="1265" y="211" text-anchor="middle" fill="#6c675f">name, category, colours,</text>
+    <text x="1265" y="228" text-anchor="middle" fill="#6c675f">brand, marks</text>
+
+    <line x1="210" y1="191" x2="248" y2="191" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="440" y1="191" x2="478" y2="191" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="670" y1="191" x2="708" y2="191" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="900" y1="191" x2="938" y2="191" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="1130" y1="191" x2="1168" y2="191" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+
+    <!-- re-ID row -->
+    <path d="M1265,237 L1265,262 L240,262 L240,282" fill="none" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+
+    <rect x="40" y="285" width="400" height="110" rx="12" fill="#ffffff" stroke="#e6e1d8"/>
+    <text x="240" y="312" text-anchor="middle" font-weight="700">re-ID cascade (each cluster vs. the object table)</text>
+    <text x="240" y="334" text-anchor="middle" fill="#6c675f">co-occurrence veto → colour veto → similarity thresholds</text>
+    <text x="240" y="352" text-anchor="middle" fill="#6c675f">0.70 alone · 0.50 same category · 0.42 same noun</text>
+    <text x="240" y="370" text-anchor="middle" fill="#6c675f">blurry crops never auto-match on looks alone</text>
+    <text x="240" y="388" text-anchor="middle" fill="#6c675f">uncertain → Spark pairwise → still unsure → ask the user</text>
+
+    <rect x="480" y="285" width="260" height="110" rx="12" fill="#fff3ea" stroke="#ff6000"/>
+    <text x="610" y="312" text-anchor="middle" font-weight="700" fill="#b25600">Muse Spark · same object?</text>
+    <text x="610" y="334" text-anchor="middle" fill="#6c675f">both crops + surroundings,</text>
+    <text x="610" y="352" text-anchor="middle" fill="#6c675f">single-home prior: one of each</text>
+    <text x="610" y="370" text-anchor="middle" fill="#6c675f">thing unless two were ever seen</text>
+    <text x="610" y="388" text-anchor="middle" fill="#6c675f">together; blur is not evidence</text>
+    <line x1="440" y1="340" x2="478" y2="340" stroke="#ff6000" stroke-width="2" marker-end="url(#arrA)"/>
+
+    <rect x="780" y="285" width="260" height="110" rx="12" fill="#ffffff" stroke="#e6e1d8"/>
+    <text x="910" y="312" text-anchor="middle" font-weight="700">dedupe + state machine</text>
+    <text x="910" y="334" text-anchor="middle" fill="#6c675f">same name never co-seen · same spot</text>
+    <text x="910" y="352" text-anchor="middle" fill="#6c675f">before/after → Spark decides</text>
+    <text x="910" y="370" text-anchor="middle" fill="#6c675f">per-session modal place →</text>
+    <text x="910" y="388" text-anchor="middle" fill="#6c675f">stationary · moved · new · not seen</text>
+    <line x1="740" y1="340" x2="778" y2="340" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+
+    <rect x="1080" y="285" width="280" height="110" rx="12" fill="#1b1a17"/>
+    <text x="1220" y="318" text-anchor="middle" font-weight="700" fill="#f1ede6">SQLite</text>
+    <text x="1220" y="342" text-anchor="middle" fill="#a39d93">sightings · embeddings · objects</text>
+    <text x="1220" y="360" text-anchor="middle" fill="#a39d93">places (room, surface) · events</text>
+    <text x="1220" y="378" text-anchor="middle" fill="#a39d93">pending merges · tracks · API log</text>
+    <line x1="1040" y1="340" x2="1078" y2="340" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+  </g>
+
+  <!-- ask row -->
+  <g font-size="14" fill="#1b1a17">
+    <rect x="40" y="485" width="190" height="92" rx="12" fill="#fff3ea" stroke="#ff6000"/>
+    <text x="135" y="512" text-anchor="middle" font-weight="700" fill="#b25600">Muse Voice Transcribe</text>
+    <text x="135" y="533" text-anchor="middle" fill="#6c675f">hold to talk; biased</text>
+    <text x="135" y="551" text-anchor="middle" fill="#6c675f">toward this home's</text>
+    <text x="135" y="569" text-anchor="middle" fill="#6c675f">object names</text>
+
+    <rect x="270" y="485" width="210" height="92" rx="12" fill="#fff3ea" stroke="#ff6000"/>
+    <text x="375" y="512" text-anchor="middle" font-weight="700" fill="#b25600">Muse Spark · intent</text>
+    <text x="375" y="533" text-anchor="middle" fill="#6c675f">question + object catalog →</text>
+    <text x="375" y="551" text-anchor="middle" fill="#6c675f">locate / what changed / history</text>
+    <text x="375" y="569" text-anchor="middle" fill="#6c675f">+ candidates, place, time</text>
+
+    <rect x="520" y="485" width="210" height="92" rx="12" fill="#ffffff" stroke="#e6e1d8"/>
+    <text x="625" y="512" text-anchor="middle" font-weight="700">SQL over the memory</text>
+    <text x="625" y="533" text-anchor="middle" fill="#6c675f">evidence-weighted pick,</text>
+    <text x="625" y="551" text-anchor="middle" fill="#6c675f">before/after places,</text>
+    <text x="625" y="569" text-anchor="middle" fill="#6c675f">confidence tiers</text>
+
+    <rect x="770" y="485" width="240" height="92" rx="12" fill="#ffffff" stroke="#e6e1d8"/>
+    <text x="890" y="512" text-anchor="middle" font-weight="700">answer card</text>
+    <text x="890" y="533" text-anchor="middle" fill="#6c675f">"Last seen on the dining table.</text>
+    <text x="890" y="551" text-anchor="middle" fill="#6c675f">Before that, the kitchen counter."</text>
+    <text x="890" y="569" text-anchor="middle" fill="#6c675f">frame + mask + crop</text>
+
+    <rect x="1050" y="485" width="310" height="92" rx="12" fill="#fff3ea" stroke="#ff6000"/>
+    <text x="1205" y="512" text-anchor="middle" font-weight="700" fill="#b25600">SAM 3.1 · video "play the moment"</text>
+    <text x="1205" y="533" text-anchor="middle" fill="#6c675f">150-frame window around the sighting,</text>
+    <text x="1205" y="551" text-anchor="middle" fill="#6c675f">box prompt, propagated both ways →</text>
+    <text x="1205" y="569" text-anchor="middle" fill="#6c675f">tracked overlay clip</text>
+
+    <line x1="230" y1="531" x2="268" y2="531" stroke="#ff6000" stroke-width="2" marker-end="url(#arrA)"/>
+    <line x1="480" y1="531" x2="518" y2="531" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="730" y1="531" x2="768" y2="531" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+    <line x1="1010" y1="531" x2="1048" y2="531" stroke="#6c675f" stroke-width="2" marker-end="url(#arr)"/>
+    <path d="M1220,395 L1220,440 L625,440 L625,483" fill="none" stroke="#6c675f" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+  </g>
+
+  <text x="40" y="640" font-size="14" fill="#6c675f">Two rules do more than any threshold: two things on one frame are never one object (co-occurrence),</text>
+  <text x="40" y="662" font-size="14" fill="#6c675f">and in one home there is one of each thing unless two were ever seen together (single-home prior).</text>
+  <text x="40" y="696" font-size="13" fill="#a39d93">DINOv2 · Muse Spark 1.3 · SAM 3.1 · Muse Voice Transcribe — Meta Global AI Developer Hackathon 2026, indie track</text>
+</svg>

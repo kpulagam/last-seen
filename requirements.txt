@@ -1,0 +1,11 @@
+requests>=2.31
+numpy>=1.26
+pillow>=10
+meta-sam-parser>=0.1.0
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9
+opencv-python-headless>=4.9
+# re-identification embeddings (DINOv3 / DINOv2 via transformers on Apple MPS)
+torch>=2.3
+transformers>=4.56

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Last Seen</title>
+<style>
+  :root { --bg:#f6f3ee; --ink:#1b1a17; --muted:#6c675f; --card:#ffffff; --line:#e6e1d8; --accent:#ff6000; --accent-ink:#fff; --soft:#fff3ea; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#17161a; --ink:#f1ede6; --muted:#a39d93; --card:#211f24; --line:#36333b; --soft:#2d2420; } }
+  :root[data-theme="dark"] { --bg:#17161a; --ink:#f1ede6; --muted:#a39d93; --card:#211f24; --line:#36333b; --soft:#2d2420; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; }
+  header { padding:28px 16px 8px; max-width:1000px; margin:0 auto; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap }
+  header h1 { font-size:26px; margin:0; letter-spacing:-.02em; }
+  header small { color:var(--muted) }
+  main { max-width:1000px; margin:0 auto; padding:0 16px 60px; display:grid; gap:18px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 10px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  input[type=text], select { flex:1; min-width:220px; font:inherit; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); }
+  button { font:inherit; padding:11px 16px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600; }
+  button:disabled { opacity:.5; cursor:default }
+  #micBtn { font-size:18px; padding:8px 12px; line-height:1 } #micBtn.rec { background:#b3261e; color:#fff; border-color:#b3261e; animation:pulse 1s infinite }
+  @keyframes pulse { 50% { opacity:.6 } }
+  .answer { font-size:21px; margin:14px 0 10px; line-height:1.35 }
+  .card { display:grid; grid-template-columns: 1fr; gap:14px; }
+  @media (min-width:720px) { .card { grid-template-columns: 1.3fr 1fr; } }
+  .card img, .card video { display:block; max-width:100%; max-height:560px; margin:0 auto; border-radius:10px; border:1px solid var(--line); background:var(--bg); }
+  .card .thumb { width:160px; height:160px; object-fit:cover; margin:8px 0 0; }
+  .meta { color:var(--muted); font-size:14px; }
+  .meta b { color:var(--ink) }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
+  .chip { padding:6px 10px; border-radius:999px; border:1px solid var(--line); font-size:13px; cursor:pointer; background:var(--bg) }
+  .chip:hover { border-color:var(--accent) }
+  .alts { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin-top:12px; }
+  .alt { border:1px solid var(--line); border-radius:12px; padding:10px; cursor:pointer; }
+  .alt img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:#ddd }
+  .timeline { display:grid; gap:10px; }
+  .change { display:grid; grid-template-columns: 84px 1fr 84px; gap:12px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:8px 10px; cursor:pointer }
+  .change:hover { border-color:var(--accent) }
+  .change img { width:84px; height:84px; object-fit:cover; border-radius:8px; background:#ddd; }
+  .change .ph { width:84px; height:84px; border-radius:8px; border:1px dashed var(--line); display:grid; place-items:center; color:var(--muted); font-size:12px; text-align:center }
+  .change.low { opacity:.72 }
+  .sub { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:12px 0 6px }
+  .kind { font-size:12px; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:999px; border:1px solid var(--line); }
+  .kind.moved { color:#b25600; border-color:#b25600 } .kind.disappeared { color:#b3261e } .kind.new { color:#1f6f43 } .kind.returned { color:#1f6f43 }
+  .gallery { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:10px; }
+  .obj { border:1px solid var(--line); border-radius:12px; padding:8px; cursor:pointer; }
+  .obj:hover { border-color:var(--accent) }
+  .obj img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:#ddd; }
+  .obj .l { font-size:13px; margin-top:6px; } .obj .s { font-size:12px; color:var(--muted) }
+  .obj.weak { opacity:.6 }
+  .sessions { display:grid; gap:12px; margin-top:10px }
+  .sess { border:1px solid var(--line); border-radius:12px; padding:10px; }
+  .sess img { width:100%; max-height:320px; object-fit:contain; border-radius:8px; background:#000; cursor:zoom-in }
+  .sess .t { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted) }
+  .events { margin-top:10px; font-size:14px; color:var(--muted) }
+  .clips { display:grid; gap:8px; }
+  .clip { display:flex; justify-content:space-between; gap:10px; font-size:14px; border:1px solid var(--line); border-radius:10px; padding:8px 12px; }
+  .bar { height:4px; background:var(--line); border-radius:2px; overflow:hidden; margin-top:6px } .bar i { display:block; height:100%; background:var(--accent); width:0; transition:width .4s }
+  pre.log { font-size:12px; color:var(--muted); max-height:140px; overflow:auto; background:var(--bg); border-radius:8px; padding:8px; margin:6px 0 0 }
+  .empty { color:var(--muted) }
+  .pending { display:grid; grid-template-columns: 1fr 1fr 1.3fr; gap:10px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:10px; }
+  .pending img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:#ddd }
+  .banner { background:var(--soft); border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:13px; color:var(--muted) }
+  details summary { cursor:pointer; color:var(--muted); font-size:13px }
+</style>
+</head>
+<body>
+<header><h1>Last Seen</h1><small>object-permanence memory for your home · Muse Spark 1.3 · SAM 3.1 · Muse Voice · DINOv2</small></header>
+<main>
+  <div id="staticBanner" class="banner" style="display:none">Static demo: answers were pre-computed from two real walk-through clips. Pick a question below.</div>
+
+  <section>
+    <h2>Ask</h2>
+    <form class="row" id="askForm">
+      <input type="text" id="q" placeholder="where did I leave my passport?  ·  what moved off the counter since this morning?" autofocus>
+      <button type="button" id="micBtn" title="Hold to ask by voice (Muse Voice Transcribe)">🎤</button>
+      <button class="primary" id="askBtn">Ask</button>
+    </form>
+    <div class="chips" id="suggest"></div>
+    <div id="answer"></div>
+  </section>
+
+  <section>
+    <h2>What changed</h2>
+    <div class="row">
+      <select id="since"><option value="">latest walk-through vs. before</option><option value="morning">since this morning</option><option value="today_start">today</option><option value="yesterday_start">since yesterday</option><option value="now-72h">last 3 days</option></select>
+      <button id="refreshChanges">Refresh</button>
+    </div>
+    <div id="changes" class="timeline" style="margin-top:10px"></div>
+  </section>
+
+  <section>
+    <h2>Needs your call</h2>
+    <div id="pending" class="empty">Nothing ambiguous right now.</div>
+  </section>
+
+  <section>
+    <h2>Objects</h2>
+    <div id="detail"></div>
+    <div id="gallery" class="gallery"></div>
+  </section>
+
+  <section>
+    <h2>Clips</h2>
+    <form class="row" id="upForm">
+      <input type="file" id="file" accept="video/*" required>
+      <input type="text" id="session" placeholder="session name (e.g. before)" style="max-width:220px">
+      <button class="primary">Ingest</button>
+    </form>
+    <div id="clips" class="clips" style="margin-top:10px"></div>
+  </section>
+</main>
+<script>window.LASTSEEN_STATIC = true;
+const STATIC = !!window.LASTSEEN_STATIC;
+const $ = s => document.querySelector(s);
+const esc = s => (s ?? '').toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm = s => s.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+let QUESTIONS = null;
+async function j(u, o) {
+  if (!STATIC) return fetch(u, o).then(r => r.json());
+  // static mode: map API calls to pre-computed JSON files
+  if (u.startsWith('/api/ask')) {
+    if (!QUESTIONS) QUESTIONS = (await fetch('api/questions.json').then(r => r.json())).questions;
+    const q = norm(JSON.parse(o.body).q);
+    let best = QUESTIONS.find(x => norm(x.q) === q);
+    if (!best) {
+      const toks = new Set(q.split(' ').filter(t => t.length > 2));
+      let score = 0;
+      for (const x of QUESTIONS) { const s = norm(x.q).split(' ').filter(t => toks.has(t)).length; if (s > score) { score = s; best = x; } }
+    }
+    if (!best) return {text: "In this static demo I can only answer the pre-computed questions below.", card: null, suggestions: []};
+    return fetch(best.file).then(r => r.json());
+  }
+  if (u.startsWith('/api/window/')) { const sid = u.split('/').pop(); const f = `media/window/${sid}.mp4`; const r = await fetch(f, {method:'HEAD'}); if (r.ok) return {url: f, frames: [0, 149]}; throw new Error('no window'); }
+  if (u.startsWith('/api/objects/')) return fetch(`api/objects/${u.split('/')[3]}.json`).then(r => r.json());
+  if (u.startsWith('/api/changes')) { const m = u.match(/session=(\d+)/); return fetch(m ? `api/changes_session_${m[1]}.json` : 'api/changes.json').then(r => r.json()).catch(() => ({changes: [], note: ''})); }
+  if (u.startsWith('/api/merge')) return {ok: true};
+  return fetch(u.replace('/api/', 'api/') + '.json').then(r => r.json());
+}
+
+function cardHTML(c, withVideo=true) {
+  if (!c) return '';
+  return `<div class="card">
+    <div>
+      <img src="${c.overlay_url}" alt="${esc(c.label)}" id="ov-${c.sighting_id}">
+      ${withVideo ? `<div class="row" style="margin-top:8px"><button onclick="playWindow(${c.sighting_id})" id="wb-${c.sighting_id}">▶ Play the moment (SAM 3.1 video tracking)</button></div><div id="win-${c.sighting_id}"></div>` : ''}
+    </div>
+    <div class="meta"><b style="font-size:17px">${esc(c.label)}</b><br>${esc(c.place || 'unknown place')}<br>${esc(c.when)}<br><span style="font-size:12px">clip ${esc(c.clip_id)} · frame ${c.frame_idx} (${c.t_s}s)${c.state ? ` · ${esc(c.state === 'disappeared' ? 'not seen since' : c.state)}` : ''}</span>
+      ${c.crop_url ? `<img class="thumb" src="${c.crop_url}" alt="">` : ''}
+      <div class="chips"><span class="chip" onclick="showDetail(${c.object_id})">history</span></div></div>
+  </div>`;
+}
+
+async function playWindow(sid) {
+  const b = $('#wb-' + sid); b.disabled = true; b.textContent = 'Tracking with SAM 3.1…';
+  try {
+    const r = await j('/api/window/' + sid, {method:'POST'});
+    $('#win-' + sid).innerHTML = `<video src="${r.url}" autoplay muted loop playsinline controls style="margin-top:8px"></video>`;
+    b.textContent = 'Tracked ' + (r.frames[1]-r.frames[0]+1) + ' frames';
+  } catch (e) { b.textContent = STATIC ? 'No tracked clip pre-computed for this one' : 'Tracking failed'; }
+}
+
+function ask(q) { $('#q').value = q; $('#askForm').requestSubmit(); }
+$('#askForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const q = $('#q').value.trim(); if (!q) return;
+  $('#askBtn').disabled = true; $('#answer').innerHTML = '<div class="meta">Thinking…</div>';
+  try {
+    const r = await j('/api/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({q})});
+    let h = `<div class="answer">${esc(r.text)}</div>`;
+    if (r.card) h += cardHTML(r.card);
+    if (r.alternatives?.length) h += `<div class="sub">${r.card ? 'Could also be' : 'Which one?'}</div><div class="alts">` + r.alternatives.map(a => `<div class="alt" onclick="showDetail(${a.object_id})"><img src="${a.crop_url}"><div><b>${esc(a.label)}</b><br><span class="meta">${esc(a.place||'')} · ${esc(a.when)}</span></div></div>`).join('') + `</div>`;
+    if (r.changes?.length) h += `<div class="timeline" style="margin-top:10px">` + changesHTML(r.changes) + `</div>`;
+    if (r.history?.length) h += `<div class="alts">` + r.history.map(a => `<div class="alt"><img src="${a.overlay_url}" style="aspect-ratio:auto"><div class="meta"><b>${esc(a.place)}</b><br>${esc(a.when)}</div></div>`).join('') + `</div>`;
+    if (r.suggestions?.length) h += `<div class="chips">` + r.suggestions.map(s => `<span class="chip" onclick="ask('where is my ${esc(s)}')">${esc(s)}</span>`).join('') + `</div>`;
+    $('#answer').innerHTML = h;
+    $('#answer').scrollIntoView({behavior:'smooth', block:'nearest'});
+  } catch (e) { $('#answer').innerHTML = `<div class="meta">Error: ${esc(e)}</div>`; }
+  $('#askBtn').disabled = false;
+};
+async function askObj(id) { const o = (await j('/api/objects')).objects.find(x => x.id === id); if (o) ask('where is my ' + o.label); }
+
+function changeHTML(c) {
+  const b = c.before_sighting_card, a = c.after_sighting_card;
+  const ev = c.evidence || {};
+  const n = (e) => e ? `${e[0]} sighting${e[0]===1?'':'s'}` : '';
+  const kind = c.kind === 'disappeared' ? 'not seen' : c.kind;
+  return `<div class="change ${c.confidence||''}" onclick="showDetail(${c.object_id})">
+    <div>${b ? `<img src="${b.crop_url}" title="before: ${esc(c.from||'')} (${n(ev.before)})">` : '<div class="ph">not seen before</div>'}</div>
+    <div><span class="kind ${c.kind}">${kind}</span> <b>${esc(c.label)}</b><br><span class="meta">${esc(c.from||'—')} → ${esc(c.to||'— not found')} · ${esc(c.when)}${c.note ? ' · ' + esc(c.note) : ''}</span></div>
+    <div>${a ? `<img src="${a.crop_url}" title="after: ${esc(c.to||'')} (${n(ev.after)})">` : '<div class="ph">not seen in the latest clip</div>'}</div>
+  </div>`;
+}
+function changesHTML(changes, note) {
+  if (!changes.length) return '<div class="empty">Nothing moved in that window.</div>';
+  const sure = changes.filter(c => c.confidence === 'high'), unsure = changes.filter(c => c.confidence !== 'high');
+  let h = note ? `<div class="meta" style="margin-bottom:8px">${esc(note)}</div>` : '';
+  h += sure.length ? sure.map(changeHTML).join('') : '<div class="empty">Nothing I am sure of.</div>';
+  if (unsure.length) h += `<details><summary>${unsure.length} less sure — each side seen only once</summary><div class="timeline" style="margin-top:8px">` + unsure.map(changeHTML).join('') + '</div></details>';
+  return h;
+}
+let sessionOptionsDone = false;
+async function loadChanges() {
+  const v = $('#since').value;
+  const url = v.startsWith('session:') ? '/api/changes?session=' + v.slice(8) : '/api/changes?frm=' + encodeURIComponent(v || 'now-72h');
+  const r = await j(url);
+  $('#changes').innerHTML = changesHTML(r.changes, r.note);
+  if (!sessionOptionsDone && r.sessions?.length > 1) {
+    sessionOptionsDone = true;
+    const sel = $('#since');
+    r.sessions.slice(1).forEach((s, i) => { const o = document.createElement('option'); o.value = 'session:' + s.id; o.textContent = `what the '${s.name}' walk-through changed (${s.when})`; sel.insertBefore(o, sel.options[1 + i]); });
+  }
+}
+$('#refreshChanges').onclick = loadChanges; $('#since').onchange = loadChanges;
+
+async function loadObjects() {
+  const r = await j('/api/objects');
+  $('#gallery').innerHTML = r.objects.length ? r.objects.map(o => `<div class="obj ${o.well_observed ? '' : 'weak'}" onclick="showDetail(${o.id})" title="${o.n_sightings} sightings">
+    ${o.crop_url ? `<img src="${o.crop_url}">` : '<div style="aspect-ratio:1;background:#ddd;border-radius:8px"></div>'}
+    <div class="l">${esc(o.label)}</div><div class="s">${esc(o.last_place||'')}<br>${esc(o.last_seen||'')} · ${esc(o.state === 'disappeared' ? 'not seen' : (o.state||''))}</div></div>`).join('')
+    : '<div class="empty">No objects yet — ingest a clip below.</div>';
+}
+async function showDetail(id) {
+  const r = await j('/api/objects/' + id + '/sightings');
+  const o = r.object || {};
+  const sess = (r.sessions || []);
+  let h = `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px">
+    <div class="row" style="justify-content:space-between"><b style="font-size:17px">${esc(o.label)}</b><span class="meta">${esc(o.category||'')} · ${r.sightings.length} sightings · ${esc(o.state === 'disappeared' ? 'not seen since' : o.state||'')}</span>
+      <span class="chip" onclick="ask('where is my ${esc(o.label).replace(/'/g, "\\'")}')">ask</span><span class="chip" onclick="$('#detail').innerHTML=''">close</span></div>`;
+  if (sess.length) {
+    h += `<div class="sessions" style="grid-template-columns:repeat(${Math.min(sess.length, 3)}, minmax(200px,1fr))">` + sess.map((s, i) => `<div class="sess"><div class="t">${esc(s.session)} · ${esc(s.when)}</div><img src="${s.overlay_url}" onclick="window.open('${s.overlay_url}')"><div style="margin-top:6px"><b>${esc(s.place)}</b> <span class="meta">· ${s.n} sighting${s.n===1?'':'s'}</span>${i > 0 && sess[i-1].place !== s.place ? ' <span class="kind moved">moved</span>' : (i > 0 ? ' <span class="kind">same place</span>' : '')}</div></div>`).join('') + `</div>`;
+  }
+  if (r.events?.length) h += `<div class="events">` + r.events.map(e => `${esc(e.when)} · <b>${esc(e.kind === 'disappeared' ? 'not seen' : e.kind)}</b> ${esc(e.note||'')}`).join('<br>') + `</div>`;
+  h += `<details style="margin-top:8px"><summary>all ${r.sightings.length} sightings</summary><div class="alts">` +
+    r.sightings.map(s => `<div class="alt" onclick="window.open('${s.overlay_url}')"><img src="${s.crop_url}"><div class="meta"><b>${esc(s.place||'')}</b><br>${esc(s.session||'')} · frame ${s.frame_idx} · q ${s.quality}</div></div>`).join('') + '</div></details></div>';
+  $('#detail').innerHTML = h;
+  $('#detail').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function loadPending() {
+  const r = await j('/api/pending');
+  $('#pending').innerHTML = r.pending.length ? r.pending.map(p => `<div class="pending">
+    <div><img src="${p.crop_a_url}"><div class="meta">${esc(p.label_a)}</div></div>
+    <div><img src="${p.crop_b_url}"><div class="meta">${esc(p.label_b)}</div></div>
+    <div><div class="meta" style="margin-bottom:8px">Same object? look-alike score ${(+p.sim).toFixed(2)}${p.spark?.reason ? '<br>' + esc(p.spark.reason) : ''}</div>
+      <button onclick="merge(${p.id}, true)">Same object</button> <button onclick="merge(${p.id}, false)">Different</button></div>
+  </div>`).join('') : '<div class="empty">Nothing ambiguous right now.</div>';
+}
+async function merge(id, same) { await j('/api/merge', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pending_id:id, same})}); loadPending(); loadObjects(); loadChanges(); }
+
+$('#upForm').onsubmit = async (e) => {
+  e.preventDefault();
+  if (STATIC) { alert('Static demo: ingestion needs the server + API key. See the README.'); return; }
+  const fd = new FormData(); fd.append('file', $('#file').files[0]); fd.append('session', $('#session').value);
+  await fetch('/api/clips', {method:'POST', body: fd});
+  $('#file').value = '';
+  loadClips();
+};
+async function loadClips() {
+  const r = await j('/api/clips');
+  const prog = Object.entries(r.progress || {}).filter(([k,v]) => v.status !== 'done').map(([k,v]) => `<div class="clip" style="display:block"><div>${esc(v.name)} — ${esc(v.status)}</div><div class="bar"><i style="width:${v.status==='error'?100:Math.min(95, v.log.length*4)}%"></i></div><pre class="log">${esc(v.log.slice(-6).join('\n'))}${v.error ? '\n' + esc(v.error) : ''}</pre></div>`);
+  const done = r.clips.map(c => `<div class="clip"><span>${esc(c.name)} <span class="meta">· ${esc(c.session||'')} · ${esc(c.when)} · ${c.duration_s}s</span></span><span class="meta">${c.n_objects} objects · ${c.n_sightings} sightings · ${esc(c.status)}</span></div>`);
+  $('#clips').innerHTML = prog.concat(done).join('') || '<div class="empty">No clips yet.</div>';
+  const busy = Object.values(r.progress || {}).some(v => v.status === 'ingesting' || v.status === 'queued');
+  if (busy) setTimeout(loadClips, 2000); else { loadObjects(); loadChanges(); loadPending(); }
+}
+// ---- voice: hold the mic, speak, release -> WAV (mono 16 kHz PCM) -> Muse Voice Transcribe -> ask
+let rec = null;
+function wavFromFloat(chunks, inRate, outRate = 16000) {
+  const total = chunks.reduce((n, c) => n + c.length, 0);
+  const src = new Float32Array(total); let o = 0; for (const c of chunks) { src.set(c, o); o += c.length; }
+  const ratio = inRate / outRate, n = Math.floor(src.length / ratio), pcm = new Int16Array(n);
+  for (let i = 0; i < n; i++) { const a = Math.floor(i * ratio), b = Math.min(src.length, Math.floor((i + 1) * ratio)); let s = 0; for (let k = a; k < b; k++) s += src[k]; s /= Math.max(1, b - a); pcm[i] = Math.max(-32768, Math.min(32767, Math.round(s * 32767))); }
+  const buf = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(buf);
+  const str = (p, t) => { for (let i = 0; i < t.length; i++) v.setUint8(p + i, t.charCodeAt(i)); };
+  str(0, 'RIFF'); v.setUint32(4, 36 + pcm.length * 2, true); str(8, 'WAVE'); str(12, 'fmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, outRate, true); v.setUint32(28, outRate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, 'data'); v.setUint32(40, pcm.length * 2, true);
+  new Int16Array(buf, 44).set(pcm);
+  return new Blob([buf], {type: 'audio/wav'});
+}
+async function micStart() {
+  if (STATIC) { $('#q').placeholder = 'Voice needs the server + API key (static demo)'; return; }
+  if (rec) return;
+  const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const srcNode = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 1, 1);
+  const chunks = [];
+  proc.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  srcNode.connect(proc); proc.connect(ctx.destination);
+  rec = {stream, ctx, proc, chunks};
+  $('#micBtn').classList.add('rec'); $('#q').placeholder = 'Listening… release to ask';
+}
+async function micStop() {
+  if (!rec) return;
+  const {stream, ctx, proc, chunks} = rec; rec = null;
+  proc.disconnect(); stream.getTracks().forEach(t => t.stop());
+  const rate = ctx.sampleRate; await ctx.close();
+  $('#micBtn').classList.remove('rec'); $('#q').placeholder = 'Transcribing with Muse Voice…';
+  const wav = wavFromFloat(chunks, rate);
+  const fd = new FormData(); fd.append('audio', wav, 'question.wav');
+  try {
+    const r = await fetch('/api/transcribe', {method: 'POST', body: fd}).then(r => r.json());
+    if (r.text) { $('#q').value = r.text; $('#askForm').requestSubmit(); } else $('#q').placeholder = "Didn't catch that — try again";
+  } catch (e) { $('#q').placeholder = 'Transcription failed'; }
+}
+const mic = $('#micBtn');
+mic.onmousedown = micStart; mic.onmouseup = micStop; mic.onmouseleave = () => { if (rec) micStop(); };
+mic.ontouchstart = e => { e.preventDefault(); micStart(); }; mic.ontouchend = e => { e.preventDefault(); micStop(); };
+
+async function loadSuggestions() {
+  let qs = ["where did I leave my car keys?", "where is my wallet?", "what did the after walk-through change?"];
+  if (STATIC) { try { QUESTIONS = (await fetch('api/questions.json').then(r => r.json())).questions; qs = QUESTIONS.map(x => x.q); } catch (e) {} }
+  $('#suggest').innerHTML = qs.map(q => `<span class="chip" onclick="ask('${esc(q).replace(/'/g, "\\'")}')">${esc(q)}</span>`).join('');
+}
+if (STATIC) $('#staticBanner').style.display = 'block';
+loadSuggestions(); loadClips(); loadObjects(); loadChanges(); loadPending();
+</script>
+</body>
+</html>
