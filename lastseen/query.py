@@ -7,7 +7,7 @@ import re
 import time
 from pathlib import Path
 
-from . import db, prompts, state
+from . import db, habits, prompts, state
 from .meta_client import MetaClient, MetaAPIError
 
 
@@ -38,6 +38,17 @@ def places(con) -> list[str]:
 
 
 ABSOLUTE_TIMES = False      # the static export sets this: "today"/"yesterday" would go stale on a published page
+
+
+def place_phrase(place: str | None) -> str:
+    """'kitchen / counter' -> 'counter in the kitchen'; 'hallway / unknown' -> 'hallway'."""
+    room, _, surface = (place or "").partition(" / ")
+    surface = surface.strip()
+    if not surface or surface == "unknown":
+        return room.strip() or "an unknown place"
+    if surface == "in hand":
+        return f"someone's hand in the {room.strip()}"
+    return f"{surface} in the {room.strip()}"
 
 
 def fmt_ts(ts: float | None) -> str:
@@ -204,11 +215,12 @@ def answer(con, client: MetaClient | None, question: str) -> dict:
         card = sighting_card(con, s)
         out["card"] = card
         obj = db.one(con, "SELECT state, state_confidence FROM objects WHERE id=?", (s["object_id"],))
-        txt = f"Last seen on the {card['place']}, {card['when']}." if card["place"] else f"Last seen {card['when']}."
+        txt = f"Last seen on the {place_phrase(card['place'])}, {card['when']}." if card["place"] else f"Last seen {card['when']}."
         mv = db.one(con, """SELECT e.ts, p.room, p.surface FROM object_events e LEFT JOIN places p ON p.id=e.from_place_id
                             WHERE e.object_id=? AND e.kind='moved' ORDER BY e.ts DESC LIMIT 1""", (s["object_id"],))
         if mv and mv["room"] and abs((mv["ts"] or 0) - (s["ts"] or 0)) < 6 * 3600:
-            txt += f" Before that it was on the {mv['room']} / {mv['surface']}."
+            txt += " Before that it was on the " + place_phrase(mv["room"] + " / " + (mv["surface"] or "unknown")) + "."
+        txt += habits.usual_line(con, s["object_id"])
         if obj and obj["state"] == "disappeared":
             txt += " I scanned that spot later and it wasn't there anymore."
         elif obj and obj["state"] == "possibly_hidden":

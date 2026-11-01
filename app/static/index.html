@@ -4,135 +4,327 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Last Seen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#f6f3ee; --ink:#1b1a17; --muted:#6c675f; --card:#ffffff; --line:#e6e1d8; --accent:#ff6000; --accent-ink:#fff; --soft:#fff3ea; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#17161a; --ink:#f1ede6; --muted:#a39d93; --card:#211f24; --line:#36333b; --soft:#2d2420; } }
-  :root[data-theme="dark"] { --bg:#17161a; --ink:#f1ede6; --muted:#a39d93; --card:#211f24; --line:#36333b; --soft:#2d2420; }
+  :root {
+    --bg:#f6f5fc; --surface:#ffffff; --ink:#15122e; --muted:#6f6b86; --line:#e7e4f3; --soft:#f1eefb; --mist:#e7e4f5; --mist2:#dcd8ef;
+    --a:#6c3cf5; --b:#c33dff; --c:#ff4d9b;
+    --muse:linear-gradient(120deg, #6c3cf5 0%, #c33dff 55%, #ff4d9b 100%);
+    --r-lg:22px; --r:14px; --r-sm:9px;
+    --shadow:0 18px 50px -24px rgba(60, 40, 140, .35), 0 2px 6px -2px rgba(60, 40, 140, .12);
+    --thread:760px; --ease:cubic-bezier(.2,.8,.2,1);
+  }
   * { box-sizing:border-box }
-  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; }
-  header { padding:28px 16px 8px; max-width:1000px; margin:0 auto; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap }
-  header h1 { font-size:26px; margin:0; letter-spacing:-.02em; }
-  header small { color:var(--muted) }
-  main { max-width:1000px; margin:0 auto; padding:0 16px 60px; display:grid; gap:18px; }
-  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
-  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:0 0 10px; }
-  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-  input[type=text], select { flex:1; min-width:220px; font:inherit; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink); }
-  button { font:inherit; padding:11px 16px; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
-  button.primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600; }
-  button:disabled { opacity:.5; cursor:default }
-  #micBtn { font-size:18px; padding:8px 12px; line-height:1 } #micBtn.rec { background:#b3261e; color:#fff; border-color:#b3261e; animation:pulse 1s infinite }
-  @keyframes pulse { 50% { opacity:.6 } }
-  .answer { font-size:21px; margin:14px 0 10px; line-height:1.35 }
-  .card { display:grid; grid-template-columns: 1fr; gap:14px; }
-  @media (min-width:720px) { .card { grid-template-columns: 1.3fr 1fr; } }
-  .card img, .card video { display:block; max-width:100%; max-height:560px; margin:0 auto; border-radius:10px; border:1px solid var(--line); background:var(--bg); }
-  .card .thumb { width:160px; height:160px; object-fit:cover; margin:8px 0 0; }
-  .meta { color:var(--muted); font-size:14px; }
-  .meta b { color:var(--ink) }
-  .chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px }
-  .chip { padding:6px 10px; border-radius:999px; border:1px solid var(--line); font-size:13px; cursor:pointer; background:var(--bg) }
-  .chip:hover { border-color:var(--accent) }
-  .alts { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:12px; margin-top:12px; }
-  .alt { border:1px solid var(--line); border-radius:12px; padding:10px; cursor:pointer; }
-  .alt img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:#ddd }
-  .timeline { display:grid; gap:10px; }
-  .change { display:grid; grid-template-columns: 84px 1fr 84px; gap:12px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:8px 10px; cursor:pointer }
-  .change:hover { border-color:var(--accent) }
-  .change img { width:84px; height:84px; object-fit:cover; border-radius:8px; background:#ddd; }
-  .change .ph { width:84px; height:84px; border-radius:8px; border:1px dashed var(--line); display:grid; place-items:center; color:var(--muted); font-size:12px; text-align:center }
-  .change.low { opacity:.72 }
-  .sub { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:12px 0 6px }
-  .kind { font-size:12px; text-transform:uppercase; letter-spacing:.06em; padding:2px 8px; border-radius:999px; border:1px solid var(--line); }
-  .kind.moved { color:#b25600; border-color:#b25600 } .kind.disappeared { color:#b3261e } .kind.new { color:#1f6f43 } .kind.returned { color:#1f6f43 }
-  .gallery { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:10px; }
-  .obj { border:1px solid var(--line); border-radius:12px; padding:8px; cursor:pointer; }
-  .obj:hover { border-color:var(--accent) }
-  .obj img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:#ddd; }
-  .obj .l { font-size:13px; margin-top:6px; } .obj .s { font-size:12px; color:var(--muted) }
-  .obj.weak { opacity:.6 }
-  .sessions { display:grid; gap:12px; margin-top:10px }
-  .sess { border:1px solid var(--line); border-radius:12px; padding:10px; }
-  .sess img { width:100%; max-height:320px; object-fit:contain; border-radius:8px; background:#000; cursor:zoom-in }
-  .sess .t { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted) }
-  .events { margin-top:10px; font-size:14px; color:var(--muted) }
-  .clips { display:grid; gap:8px; }
-  .clip { display:flex; justify-content:space-between; gap:10px; font-size:14px; border:1px solid var(--line); border-radius:10px; padding:8px 12px; }
-  .bar { height:4px; background:var(--line); border-radius:2px; overflow:hidden; margin-top:6px } .bar i { display:block; height:100%; background:var(--accent); width:0; transition:width .4s }
-  pre.log { font-size:12px; color:var(--muted); max-height:140px; overflow:auto; background:var(--bg); border-radius:8px; padding:8px; margin:6px 0 0 }
+  [hidden] { display:none !important }
+  html { scroll-behavior:smooth }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 "Manrope", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; -webkit-font-smoothing:antialiased; min-height:100vh; display:flex; flex-direction:column }
+  h1, h2, h3 { margin:0; letter-spacing:-.02em }
+  button, input, select { font:inherit; color:inherit }
+  button { cursor:pointer; border:0; background:none; padding:0 }
+  button:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline:3px solid rgba(108, 60, 245, .4); outline-offset:2px; border-radius:var(--r-sm) }
+  img { display:block }
+  em { font-style:normal; font-weight:700 }
+
+  /* ---------- the ring: one brand object */
+  .ring { --size:30px; display:inline-block; width:var(--size); height:var(--size); border-radius:50%; position:relative; flex:none; vertical-align:middle;
+    background:conic-gradient(from 140deg, #6c3cf5, #c33dff, #ff4d9b, #ff8a5b, #6c3cf5); }
+  .ring::after { content:""; position:absolute; inset:calc(var(--size) * .2); border-radius:50%; background:var(--surface) }
+  .ring.thinking { animation:spin 1.6s linear infinite }
+  .ring.listening { transform:scale(calc(1 + var(--lvl, 0) * .9)); box-shadow:0 0 calc(6px + 40px * var(--lvl, 0)) rgba(195, 61, 255, calc(.25 + var(--lvl, 0) * .6)); transition:transform .08s linear, box-shadow .12s linear }
+  .ring.listening::after { background:#fff }
+  @keyframes spin { to { transform:rotate(360deg) } }
+
+  /* ---------- cut-outs: the same object everywhere */
+  .cut { object-fit:contain; filter:drop-shadow(0 6px 6px rgba(26,25,69,.22)) saturate(1.05) brightness(1.03); background:none }
+
+  /* ---------- header */
+  .top { display:flex; align-items:center; gap:18px; padding:18px 28px 10px; max-width:1240px; width:100%; margin:0 auto }
+  .brand { display:flex; align-items:center; gap:11px; text-decoration:none; color:inherit }
+  .brand h1 { font-size:21px; font-weight:800; letter-spacing:-.035em }
+  .brand .tag { color:var(--muted); font-size:14px; margin-left:4px }
+  .rail { margin-left:auto; display:flex; align-items:center; font-size:12px; color:var(--muted) }
+  .rail .stop { display:flex; flex-direction:column; align-items:center; gap:3px; padding:0 2px; background:none; border:0; color:var(--muted); min-width:84px; border-radius:10px }
+  .rail .stop b { color:var(--ink); font-weight:700; font-size:13px }
+  .rail .dot { width:11px; height:11px; border-radius:50%; border:2px solid var(--a); background:var(--surface) }
+  .rail .stop.current .dot { background:var(--muse); border-color:transparent }
+  .rail .seg { width:44px; height:2px; background:linear-gradient(90deg, var(--a), var(--c)); margin-bottom:34px; opacity:.6 }
+  .nav { display:flex; gap:8px; margin-left:18px }
+  .navbtn { padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px }
+  .navbtn:hover { border-color:var(--b) }
+  .badge { background:var(--muse); color:#fff; font-size:11px; font-weight:800; padding:1px 7px; border-radius:999px }
+
+  /* ---------- thread */
+  main { flex:1; width:100%; max-width:var(--thread); margin:0 auto; padding:10px 20px 150px; display:flex; flex-direction:column; gap:22px }
+  main.empty { justify-content:center; padding-bottom:190px }
+  main:not(.empty) { justify-content:flex-end }
+  .hero { text-align:center; padding:30px 0 10px; animation:fadein .6s both }
+  .hero .ring { display:block; margin:0 auto 22px }
+  .hero h2 { font-size:34px; font-weight:800; letter-spacing:-.035em }
+  .hero p { color:var(--muted); margin:8px 0 0; font-size:16px }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:18px }
+  .chip { padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:14px; cursor:pointer; color:var(--ink); transition:border-color .15s, background .15s }
+  .chip:hover { border-color:var(--b); background:#fdf8ff }
+  .turn { display:flex; flex-direction:column; gap:8px; animation:rise .45s var(--ease) both }
+  @keyframes rise { from { opacity:0; transform:translateY(12px) } }
+  @keyframes fadein { from { opacity:0 } }
+  .turn.you { align-items:flex-end }
+  .you .bubble { background:var(--surface); border:1.5px solid transparent; background:linear-gradient(var(--surface), var(--surface)) padding-box, var(--muse) border-box; border-radius:999px; padding:10px 18px; font-size:16px; font-weight:600; display:flex; align-items:center; gap:10px; max-width:90% }
+  .you .bubble .ring { --size:16px }
+  .turn.me { align-items:flex-start }
+  .me .bubble { background:var(--surface); border-radius:22px 22px 22px 6px; padding:12px 18px 12px 14px; font-size:17px; line-height:1.5; display:flex; align-items:flex-start; gap:10px; max-width:92%; box-shadow:var(--shadow) }
+  .me .bubble .ring { --size:20px; margin-top:4px }
+  .me .bubble .say { margin:0 }
+  .extra { width:100%; display:grid; grid-template-rows:1fr; transition:grid-template-rows .5s var(--ease), opacity .3s var(--ease); margin-top:4px }
+  .extra.folded { grid-template-rows:0fr; opacity:0; margin-top:0; pointer-events:none }
+  .extra > div { overflow:hidden; min-height:0; display:flex; flex-direction:column; gap:12px; padding:4px 0 6px }
+  .extra.folded > div { padding:0 }
+  .unfold { display:none; align-self:flex-start; margin:-2px 0 0 14px; font-size:13px; color:var(--muted); padding:5px 12px; border-radius:999px; border:1px dashed var(--line); background:var(--surface) }
+  .unfold:hover { color:var(--ink); border-color:var(--b) }
+  .turn.me.folded .unfold { display:inline-flex }
+  .card { width:100%; background:var(--surface); border-radius:var(--r-lg); box-shadow:var(--shadow); padding:16px 18px; display:flex; flex-direction:column; gap:14px }
+  .detail { display:grid; grid-template-rows:0fr; transition:grid-template-rows .45s var(--ease) } .detail.open { grid-template-rows:1fr } .detail > div { overflow:hidden; min-height:0; display:flex; flex-direction:column; gap:12px }
+  .say { font-size:17px; line-height:1.5; margin:0 }
+  .say .cursor { display:inline-block; width:2px; height:1.1em; background:var(--b); vertical-align:-2px; margin-left:2px; animation:blink .8s steps(2) infinite }
+  @keyframes blink { 50% { opacity:0 } }
+  .lead { display:grid; grid-template-columns:96px 1fr; gap:16px; align-items:center }
+  .lead .cut { width:96px; height:96px; cursor:zoom-in; transition:transform .2s var(--ease) }
+  .lead .cut:hover { transform:translateY(-3px) scale(1.04) }
+  .lead h3 { font-size:19px; font-weight:800; letter-spacing:-.03em; margin:0 0 2px }
+  .state { color:var(--muted); font-size:13px }
+  .actions { display:flex; gap:8px; flex-wrap:wrap }
+  .act { display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:14px; font-weight:600; transition:border-color .15s, transform .12s }
+  .act:hover { border-color:var(--b); transform:translateY(-1px) }
+  .act.primary { background:var(--ink); color:#fff; border-color:var(--ink) }
+  .act.on, .act.primary.on { background:var(--soft); color:var(--ink); border-color:var(--b) }
+  .act .tri { width:0; height:0; border-left:8px solid currentColor; border-top:5px solid transparent; border-bottom:5px solid transparent }
+  .act:disabled { opacity:.6; cursor:default; transform:none }
+  .fine { color:var(--muted); font-size:13px; margin:0 }
+  .receipt { color:var(--muted); font-size:12px; margin:0 }
+  .thinking-row { display:flex; align-items:center; gap:10px; color:var(--muted) }
+
+  /* ---------- trail */
+  .trail { position:relative; padding:4px 0 2px }
+  .trail svg { width:100%; height:18px; display:block; overflow:visible }
+  .trail .labels { display:grid; margin-top:4px }
+  .trail .lab { font-size:13px; line-height:1.3; min-width:0 }
+  .trail .lab b { display:block; font-weight:700; font-size:14px; color:var(--ink) }
+  .trail .lab span { color:var(--muted) }
+  .trail .lab.now b { background:var(--muse); -webkit-background-clip:text; background-clip:text; color:transparent }
+  .trail line.line { stroke:url(#museLine); stroke-width:2.5; stroke-linecap:round }
+  .trail.animate line.line { stroke-dasharray:1200; stroke-dashoffset:1200; animation:draw 1.1s .25s cubic-bezier(.3,.7,.2,1) forwards }
+  @keyframes draw { to { stroke-dashoffset:0 } }
+  .trail circle { fill:var(--surface); stroke:var(--a); stroke-width:2.5 }
+  .trail circle.now { fill:url(#museFill); stroke:none }
+  .trail.animate circle { transform-box:fill-box; transform-origin:center; animation:pop .35s cubic-bezier(.2,.9,.3,1.4) both }
+  @keyframes pop { from { transform:scale(0) } }
+
+  /* ---------- evidence (on demand) */
+  .evidence { display:grid; grid-template-rows:0fr; transition:grid-template-rows .55s var(--ease) }
+  .evidence.open { grid-template-rows:1fr }
+  .evidence > div { overflow:hidden; min-height:0 }
+  .stack { position:relative; width:100%; aspect-ratio:16/9; border-radius:var(--r-lg); overflow:hidden; background:var(--mist); box-shadow:var(--shadow) }
+  .stack img, .stack video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
+  .stack img.plain { filter:blur(10px); transform:scale(1.04); transition:filter 1s var(--ease), transform 1s var(--ease) }
+  .stack.found img.plain { filter:blur(0); transform:none }
+  .stack img.mask { opacity:0 }
+  .stack.found img.mask { animation:maskpulse 1.2s .5s ease 1 }
+  @keyframes maskpulse { 0% { opacity:0 } 45% { opacity:.95 } 100% { opacity:0 } }
+  .stack video { animation:fadein .6s both }
+  .stack .halo { position:absolute; border:2.5px solid #ff4d9b; border-radius:12px; opacity:0; pointer-events:none; box-shadow:0 0 0 2px rgba(255,255,255,.6), 0 0 30px rgba(255, 77, 155, .55) }
+  .stack.found .halo { animation:halo 1.4s .7s cubic-bezier(.2,.7,.2,1) 1 }
+  @keyframes halo { 0% { opacity:0; transform:scale(1.8) } 35% { opacity:1 } 100% { opacity:0; transform:scale(1) } }
+  .stack .tag { position:absolute; left:12px; bottom:12px; background:rgba(21,18,46,.8); color:#fff; font-size:12px; font-weight:600; padding:6px 10px; border-radius:999px; backdrop-filter:blur(6px) }
+  .stack .prog { position:absolute; left:0; bottom:0; height:3px; width:0; background:var(--muse) }
+
+  /* ---------- options (which one?) */
+  .options { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px }
+  .opt { display:grid; grid-template-columns:64px 1fr; gap:12px; align-items:center; background:var(--bg); border-radius:var(--r); padding:8px 10px; cursor:pointer; text-align:left; transition:background .15s, transform .12s; border:1px solid transparent }
+  .opt:hover { background:#fdf8ff; border-color:var(--b); transform:translateY(-1px) }
+  .opt .cut { width:64px; height:64px }
+  .opt b { display:block; font-size:15px } .opt span { color:var(--muted); font-size:13px }
+
+  /* ---------- change rows */
+  .stats { display:flex; gap:8px; flex-wrap:wrap }
+  .pill { font-size:13px; font-weight:600; padding:5px 11px; border-radius:999px; background:var(--soft); color:var(--ink) }
+  .pill.moved { background:var(--muse); color:#fff } .pill.new { background:#e3f4ea; color:#1f6b43 } .pill.gone { background:#fde8ee; color:#a3334f } .pill.low { background:var(--surface); border:1px solid var(--line); color:var(--muted) }
+  .rows { display:flex; flex-direction:column }
+  .rows.enter .row { animation:rise .4s var(--ease) both; animation-delay:calc(var(--i, 0) * 45ms) }
+  .row { display:grid; grid-template-columns:52px 26px 52px 1fr; gap:10px; align-items:center; padding:8px 6px; border-top:1px solid var(--line); text-align:left; width:100%; border-radius:10px; transition:background .15s }
+  .row:first-child { border-top:0 }
+  .row:hover { background:var(--bg) }
+  .row .cut, .row .ph { width:52px; height:52px }
+  .row .ph { border-radius:11px; border:1px dashed var(--line); background:var(--bg) }
+  .row svg { width:26px; height:16px; display:block }
+  .row .txt { min-width:0 }
+  .row .txt b { font-size:15px; display:block }
+  .row .txt span { color:var(--muted); font-size:13px }
+  .kind { font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; background:var(--soft); color:var(--ink); margin-right:6px; vertical-align:1px }
+  .kind.moved, .kind.away { background:linear-gradient(120deg, #ece5ff, #ffe3f0); color:#6c3cf5 } .kind.new, .kind.returned, .kind.back { background:#e3f4ea; color:#1f6b43 } .kind.disappeared { background:#fde8ee; color:#a3334f }
+  details.more summary { cursor:pointer; color:var(--muted); font-size:14px; list-style:none; display:inline-flex; align-items:center; gap:8px; padding:6px 0 } details.more summary::-webkit-details-marker { display:none }
+  details.more summary::before { content:"+"; display:grid; place-items:center; width:20px; height:20px; border-radius:50%; border:1px solid var(--line); font-size:14px; line-height:1 }
+  details.more[open] summary::before { content:"–" }
+
+  /* ---------- composer */
+  .dock { position:fixed; left:0; right:0; bottom:0; padding:14px 20px 22px; background:linear-gradient(180deg, rgba(246,245,252,0), rgba(246,245,252,.92) 35%, var(--bg)); z-index:5 }
+  .composer { max-width:var(--thread); margin:0 auto }
+  .ask { position:relative; display:flex; align-items:center; gap:10px; background:var(--surface); border-radius:999px; padding:8px 8px 8px 12px; box-shadow:var(--shadow); border:1.5px solid rgba(255,255,255,.8) }
+  .ask input { flex:1; border:0; background:none; font-size:17px; padding:9px 6px; min-width:0; outline:none }
+  .ask input::placeholder { color:#a6a2bb }
+  .ask:focus-within { box-shadow:var(--shadow), 0 0 0 3px rgba(108, 60, 245, .16) }
+  .ask.thinking { background:linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(90deg, #6c3cf5, #c33dff, #ff4d9b, #6c3cf5) border-box; border-color:transparent; background-size:100% 100%, 300% 100%; animation:shimmer 1.8s linear infinite }
+  @keyframes shimmer { to { background-position:0 0, 300% 0 } }
+  .ask.listening { box-shadow:var(--shadow), 0 0 0 4px rgba(255, 77, 155, .18) }
+  .mic { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:var(--soft); transition:background .2s; flex:none }
+  .mic:hover { background:#e9e4fb } .mic.rec { background:#ffe3ef }
+  .plus { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; color:var(--muted); font-size:22px; flex:none } .plus:hover { background:var(--soft) }
+  .go { background:var(--ink); color:#fff; font-weight:700; padding:11px 18px; border-radius:999px; transition:transform .12s; flex:none }
+  .go:hover { transform:translateY(-1px) } .go:disabled { opacity:.5; transform:none }
+  .hint { text-align:center; color:var(--muted); font-size:12px; margin:8px 0 0 }
+
+  /* ---------- sheets (dialogs) */
+  dialog { border:0; border-radius:var(--r-lg); padding:0; max-width:min(1240px, 95vw); width:100%; background:var(--surface); color:var(--ink); box-shadow:0 30px 80px -30px rgba(20, 10, 60, .5) }
+  dialog::backdrop { background:rgba(21, 18, 46, .45); backdrop-filter:blur(3px) }
+  .dlg { padding:22px 24px 24px; max-height:88vh; overflow:auto }
+  .dlg-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:14px }
+  .dlg-head h3 { font-size:22px; font-weight:800; letter-spacing:-.03em }
+  .dlg-head .right { margin-left:auto; display:flex; gap:8px; align-items:center }
+  .close { width:38px; height:38px; border-radius:50%; background:var(--soft); display:grid; place-items:center; font-size:18px }
+  .frames { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; margin-top:16px }
+  .frame img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:12px; background:var(--mist); cursor:zoom-in }
+  .frame .cap { margin-top:8px; font-size:14px } .frame .cap b { display:block } .frame .cap span { color:var(--muted); font-size:13px }
+  .sightings { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:10px; margin-top:10px }
+  .sightings img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; background:var(--mist); cursor:zoom-in }
+  .sightings .cap { font-size:12px; color:var(--muted); margin-top:4px }
+  .pend { display:grid; grid-template-columns:1fr 1fr 1.4fr; gap:12px; align-items:center; background:var(--bg); border-radius:var(--r-lg); padding:12px; margin-bottom:10px }
+  .pend img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; background:var(--mist) }
+  .pend .cap { color:var(--muted); font-size:13px; margin-top:6px }
+  .upform { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:6px }
+  .upform input[type=text] { border:1px solid var(--line); border-radius:999px; padding:9px 14px; background:var(--surface); min-width:280px }
+  .clips { display:grid; gap:8px; margin-top:14px }
+  .clip { display:flex; justify-content:space-between; gap:12px; font-size:14px; background:var(--bg); border-radius:var(--r); padding:10px 14px; align-items:center }
+  .clip .meta { color:var(--muted); font-size:13px }
+  .bar { height:4px; background:var(--line); border-radius:2px; overflow:hidden; margin-top:6px } .bar i { display:block; height:100%; background:var(--muse); width:0; transition:width .4s }
+  pre.log { font-size:12px; color:var(--muted); max-height:140px; overflow:auto; background:var(--surface); border-radius:8px; padding:8px; margin:6px 0 0; white-space:pre-wrap }
   .empty { color:var(--muted) }
-  .pending { display:grid; grid-template-columns: 1fr 1fr 1.3fr; gap:10px; align-items:center; border:1px solid var(--line); border-radius:12px; padding:10px; }
-  .pending img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; background:#ddd }
-  .banner { background:var(--soft); border:1px solid var(--line); border-radius:10px; padding:8px 12px; font-size:13px; color:var(--muted) }
-  details summary { cursor:pointer; color:var(--muted); font-size:13px }
+
+  /* ---------- your home: the board behind the button */
+  .timebar { display:flex; align-items:center; gap:0; margin-left:12px }
+  .timebar .stop { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:88px; color:var(--muted); font-size:12px; background:none; border:0 }
+  .timebar .stop b { color:var(--ink); font-size:13px; font-weight:800 }
+  .timebar .dot { width:12px; height:12px; border-radius:50%; border:2px solid var(--a); background:var(--surface); transition:transform .2s var(--ease), background .2s }
+  .timebar .stop.on .dot { background:var(--muse); border-color:transparent; transform:scale(1.15) }
+  .timebar .seg { width:90px; height:3px; border-radius:2px; background:var(--mist2); margin-bottom:32px; position:relative; overflow:hidden }
+  .timebar .seg i { position:absolute; inset:0; width:0; background:var(--muse); transition:width .5s var(--ease) } .timebar .seg.on i { width:100% }
+  .board { position:relative }
+  .rooms { display:grid; grid-template-columns:repeat(6, 1fr); gap:14px 18px; align-content:start }
+  .room { grid-column:span 2; display:flex; flex-direction:column; gap:8px; min-width:0 }
+  .room.xl { grid-column:span 3 } .room.sm { grid-column:span 1 }
+  .room h4 { margin:0 2px 0; font-size:13px; font-weight:800; color:var(--ink) } .room h4 .nm { text-transform:capitalize } .room h4 small { color:var(--muted); font-weight:600; margin-left:6px; font-size:12px }
+  .plinths { display:flex; flex-wrap:wrap; gap:10px 12px; align-items:flex-start }
+  .plinth { position:relative; background:var(--mist); border-radius:20px; padding:28px 10px 10px; min-height:104px; min-width:110px; display:flex; align-items:flex-end; gap:2px; flex-wrap:wrap; transition:background .3s var(--ease) }
+  .plinth .lbl { position:absolute; left:14px; top:8px; font-size:12px; font-weight:600; color:var(--muted); text-transform:lowercase }
+  .plinth.empty { background:transparent; border:1.5px dashed var(--mist2); min-height:88px }
+  .thing { position:relative; width:84px; height:84px; display:grid; place-items:center; border-radius:16px; will-change:transform }
+  .thing .cut { width:78px; height:78px; transition:transform .25s var(--ease); pointer-events:none }
+  .thing::before { content:""; position:absolute; left:16px; right:16px; bottom:3px; height:8px; border-radius:50%; background:rgba(26,25,69,.16); filter:blur(3px) }
+  .thing .name { position:absolute; left:50%; bottom:-6px; transform:translate(-50%, 100%) scale(.9); opacity:0; white-space:nowrap; background:var(--ink); color:#fff; font-size:12px; font-weight:600; padding:4px 9px; border-radius:999px; pointer-events:none; transition:opacity .2s, transform .2s var(--ease); z-index:3 }
+  .thing:hover .name { opacity:1; transform:translate(-50%, 100%) scale(1) }
+  .thing:hover .cut { transform:translateY(-4px) }
+  .thing.ghost .cut { opacity:.3; filter:grayscale(.7) } .thing.ghost::before { opacity:0 }
+  .thing.ghost::after { content:"not seen this time"; position:absolute; top:-2px; left:50%; transform:translateX(-50%); white-space:nowrap; font-size:10px; font-weight:700; color:var(--muted); background:var(--surface); border:1px dashed var(--mist2); border-radius:999px; padding:2px 7px; opacity:0; transition:opacity .2s }
+  .thing.ghost.maybe::after { content:"maybe still here" } .thing.ghost:hover::after { opacity:1 }
+  svg.trails { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible; z-index:4 }
+  svg.trails path { fill:none; stroke:url(#museLine); stroke-width:2.5; stroke-linecap:round; stroke-dasharray:2000; stroke-dashoffset:2000; animation:draw2 .55s var(--ease) forwards, fade .5s .9s forwards }
+  @keyframes draw2 { to { stroke-dashoffset:0 } } @keyframes fade { to { opacity:0 } }
+  .legend { display:flex; gap:16px; color:var(--muted); font-size:13px; margin-top:14px; flex-wrap:wrap }
+  .legend i { display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:-1px; margin-right:6px }
+  .legend .l-moved { background:var(--muse) } .legend .l-gone { border:1px dashed var(--muted) }
+
+  @media (max-width: 760px) { .rail { display:none } .pend { grid-template-columns:1fr 1fr } .lead { grid-template-columns:72px 1fr } }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important } .stack img.plain { filter:none } }
 </style>
 </head>
 <body>
-<header><h1>Last Seen</h1><small>object-permanence memory for your home · Muse Spark 1.3 · SAM 3.1 · Muse Voice · DINOv2</small></header>
-<main>
-  <div id="staticBanner" class="banner" style="display:none">Static demo: answers were pre-computed from two real walk-through clips. Pick a question below.</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="museLine" gradientUnits="userSpaceOnUse" x1="0%" y1="0" x2="100%" y2="0"><stop offset="0" stop-color="#6c3cf5"/><stop offset=".55" stop-color="#c33dff"/><stop offset="1" stop-color="#ff4d9b"/></linearGradient>
+    <linearGradient id="museFill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6c3cf5"/><stop offset="1" stop-color="#ff4d9b"/></linearGradient>
+  </defs>
+</svg>
 
-  <section>
-    <h2>Ask</h2>
-    <form class="row" id="askForm">
-      <input type="text" id="q" placeholder="where did I leave my passport?  ·  what moved off the counter since this morning?" autofocus>
-      <button type="button" id="micBtn" title="Hold to ask by voice (Muse Voice Transcribe)">🎤</button>
-      <button class="primary" id="askBtn">Ask</button>
-    </form>
+<header class="top">
+  <a class="brand" href="#" onclick="return false"><span class="ring" id="ring" style="--size:26px"></span><h1>Last Seen</h1><span class="tag">Your home remembers.</span></a>
+  <nav class="rail" id="rail" aria-label="walk-throughs"></nav>
+  <div class="nav">
+    <button class="navbtn" onclick="openHome()" title="Everything the home remembers, room by room">Your home</button>
+    <button class="navbtn" id="pendBtn" onclick="openPending()" hidden>Needs your call <span class="badge" id="pendN"></span></button>
+  </div>
+</header>
+
+<main id="thread" class="empty">
+  <section class="hero" id="hero">
+    <span class="ring" style="--size:56px"></span>
+    <h2>Your home remembers.</h2>
+    <p>Ask where anything is, or what moved. Say it or type it.</p>
     <div class="chips" id="suggest"></div>
-    <div id="answer"></div>
-  </section>
-
-  <section>
-    <h2>What changed</h2>
-    <div class="row">
-      <select id="since"><option value="">latest walk-through vs. before</option><option value="morning">since this morning</option><option value="today_start">today</option><option value="yesterday_start">since yesterday</option><option value="now-72h">last 3 days</option></select>
-      <button id="refreshChanges">Refresh</button>
-    </div>
-    <div id="changes" class="timeline" style="margin-top:10px"></div>
-  </section>
-
-  <section>
-    <h2>Needs your call</h2>
-    <div id="pending" class="empty">Nothing ambiguous right now.</div>
-  </section>
-
-  <section>
-    <h2>Objects</h2>
-    <div id="detail"></div>
-    <div id="gallery" class="gallery"></div>
-  </section>
-
-  <section>
-    <h2>Clips</h2>
-    <form class="row" id="upForm">
-      <input type="file" id="file" accept="video/*" required>
-      <input type="text" id="session" placeholder="session name (e.g. before)" style="max-width:220px">
-      <button class="primary">Ingest</button>
-    </form>
-    <div id="clips" class="clips" style="margin-top:10px"></div>
   </section>
 </main>
+
+<div class="dock">
+  <div class="composer">
+    <form class="ask" id="askForm">
+      <button type="button" class="plus" id="plusBtn" title="Add a walk-through" aria-label="Add a walk-through">+</button>
+      <input type="text" id="q" placeholder="Where are my…" autocomplete="off" autofocus>
+      <button type="button" class="mic" id="micBtn" title="Tap and ask out loud" aria-label="Tap and ask out loud"><span class="ring" id="micRing" style="--size:24px"></span></button>
+      <button class="go" id="askBtn">Ask</button>
+    </form>
+    <p class="hint" id="hint">Tap the ring to ask out loud, or press space.</p>
+  </div>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<dialog id="homeDlg"><div class="dlg">
+  <div class="dlg-head"><div><h3>Your home, as it was last seen</h3><span class="state" id="homeStats"></span></div><div class="timebar" id="timebar"></div><div class="right"><button class="close" onclick="$('#homeDlg').close()" aria-label="Close">×</button></div></div>
+  <div class="board" id="board"><div class="rooms" id="rooms"></div><svg class="trails" id="trails"></svg></div>
+  <div class="legend"><span><i class="l-moved"></i>drag time between walk-throughs and things travel</span><span><i class="l-gone"></i>faded: not seen in that walk-through</span></div>
+</div></dialog>
+<dialog id="pendDlg"><div class="dlg">
+  <div class="dlg-head"><div><h3>Needs your call</h3><span class="state">Two sightings that may be one thing. Spark could not settle it; you can.</span></div><div class="right"><button class="close" onclick="$('#pendDlg').close()" aria-label="Close">×</button></div></div>
+  <div id="pending"></div>
+</div></dialog>
+<dialog id="clipsDlg"><div class="dlg">
+  <div class="dlg-head"><div><h3>Walk-throughs</h3><span class="state">A minute of video per room. Each one becomes a moment the memory can compare.</span></div><div class="right"><button class="close" onclick="$('#clipsDlg').close()" aria-label="Close">×</button></div></div>
+  <form class="upform" id="upForm">
+    <input type="file" id="file" accept="video/*" required>
+    <input type="text" id="session" placeholder="name it (e.g. tuesday evening)">
+    <button class="act primary">Add walk-through</button>
+  </form>
+  <div id="clips" class="clips"></div>
+</div></dialog>
+
 <script>
 const STATIC = !!window.LASTSEEN_STATIC;
 const $ = s => document.querySelector(s);
 const esc = s => (s ?? '').toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const norm = s => s.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const splitPlace = p => { const [room, surface] = (p || '').split(' / '); return {room: (room || 'somewhere').trim(), surface: surface && surface !== 'unknown' ? surface.trim() : ''}; };
+const phrase = p => { const s = splitPlace(p); return s.surface ? `${s.surface} in the ${s.room}` : s.room; };
+const timeOnly = w => (w || '').replace(/^.*? at /, '');
+const EASE = 'cubic-bezier(.2,.8,.2,1)';
+const SESSIONS = {list: [], current: null};
+const CARDS = {};
+let QUESTIONS = null, BOARD = null;
 
-let QUESTIONS = null;
 async function j(u, o) {
   if (!STATIC) return fetch(u, o).then(r => r.json());
-  // static mode: map API calls to pre-computed JSON files
   if (u.startsWith('/api/ask')) {
     if (!QUESTIONS) QUESTIONS = (await fetch('api/questions.json').then(r => r.json())).questions;
     const q = norm(JSON.parse(o.body).q);
     let best = QUESTIONS.find(x => norm(x.q) === q);
-    if (!best) {
-      const toks = new Set(q.split(' ').filter(t => t.length > 2));
-      let score = 0;
-      for (const x of QUESTIONS) { const s = norm(x.q).split(' ').filter(t => toks.has(t)).length; if (s > score) { score = s; best = x; } }
-    }
-    if (!best) return {text: "In this static demo I can only answer the pre-computed questions below.", card: null, suggestions: []};
+    if (!best) { const toks = new Set(q.split(' ').filter(t => t.length > 2)); let score = 0; for (const x of QUESTIONS) { const s = norm(x.q).split(' ').filter(t => toks.has(t)).length; if (s > score) { score = s; best = x; } } }
+    if (!best) return {text: "In this pre-computed demo I can only answer the suggested questions.", card: null};
     return fetch(best.file).then(r => r.json());
   }
   if (u.startsWith('/api/window/')) { const sid = u.split('/').pop(); const f = `media/window/${sid}.mp4`; const r = await fetch(f, {method:'HEAD'}); if (r.ok) return {url: f, frames: [0, 149]}; throw new Error('no window'); }
@@ -141,134 +333,328 @@ async function j(u, o) {
   if (u.startsWith('/api/merge')) return {ok: true};
   return fetch(u.replace('/api/', 'api/') + '.json').then(r => r.json());
 }
+const cutImg = (c, cls = 'cut') => c ? `<img class="${cls}" src="${c.cutout_url || c.crop_url}" alt="" onerror="this.onerror=null; this.src='${c.crop_url || ''}'">` : '';
 
-function cardHTML(c, withVideo=true) {
-  if (!c) return '';
-  return `<div class="card">
-    <div>
-      <img src="${c.overlay_url}" alt="${esc(c.label)}" id="ov-${c.sighting_id}">
-      ${withVideo ? `<div class="row" style="margin-top:8px"><button onclick="playWindow(${c.sighting_id})" id="wb-${c.sighting_id}">▶ Play the moment (SAM 3.1 video tracking)</button></div><div id="win-${c.sighting_id}"></div>` : ''}
-    </div>
-    <div class="meta"><b style="font-size:17px">${esc(c.label)}</b><br>${esc(c.place || 'unknown place')}<br>${esc(c.when)}<br><span style="font-size:12px">clip ${esc(c.clip_id)} · frame ${c.frame_idx} (${c.t_s}s)${c.state ? ` · ${esc(c.state === 'disappeared' ? 'not seen since' : c.state)}` : ''}</span>
-      ${c.crop_url ? `<img class="thumb" src="${c.crop_url}" alt="">` : ''}
-      <div class="chips"><span class="chip" onclick="showDetail(${c.object_id})">history</span></div></div>
-  </div>`;
+// ---------- thread primitives
+function addTurn(cls, html) {
+  $('#hero')?.remove(); $('#thread').classList.remove('empty');
+  const el = document.createElement('div'); el.className = 'turn ' + cls; el.innerHTML = html;
+  $('#thread').appendChild(el);
+  requestAnimationFrame(() => el.scrollIntoView({behavior: 'smooth', block: 'end'}));
+  return el;
+}
+function youTurn(text, voice) { return addTurn('you', `<div class="bubble">${voice ? '<span class="ring"></span>' : ''}${esc(text)}</div>`); }
+function meTurn(inner, thinking) { const t = addTurn('me', `<div class="bubble"><span class="ring${thinking ? ' thinking' : ''}" aria-label="Last Seen"></span><p class="say">${thinking ? `<span class="thinking-row">${inner}</span>` : inner}</p></div><div class="extra"><div></div></div><button class="unfold">Show more</button>`); t.querySelector('.unfold').onclick = () => unfold(t); return t; }
+function settle(turn) { turn.querySelector('.bubble .ring')?.classList.remove('thinking'); }
+function unfold(turn) { turn.classList.remove('folded'); turn.querySelector('.extra')?.classList.remove('folded'); }
+function streamText(el, text, speed = 13) {
+  return new Promise(res => {
+    let i = 0; el.innerHTML = '<span class="cursor"></span>';
+    const step = () => { i = Math.min(text.length, i + 1); el.innerHTML = esc(text.slice(0, i)) + (i < text.length ? '<span class="cursor"></span>' : ''); if (i < text.length) setTimeout(step, speed); else res(); };
+    step();
+  });
 }
 
+// ---------- trail
+function trailHTML(stops, animate = true) {
+  if (!stops || !stops.length) return '';
+  const n = stops.length;
+  const x = i => n === 1 ? 50 : 6 + 88 * i / (n - 1);
+  const dots = stops.map((s, i) => `<circle class="${i === n - 1 ? 'now' : ''}" cx="${x(i)}%" cy="9" r="${i === n - 1 ? 7 : 5.5}" style="animation-delay:${.25 + i * .25}s"/>`).join('');
+  const labels = stops.map((s, i) => { const p = splitPlace(s.place); return `<div class="lab ${i === n - 1 ? 'now' : ''}" style="text-align:${n === 1 ? 'center' : i === 0 ? 'left' : i === n - 1 ? 'right' : 'center'}"><b>${esc(p.surface || p.room)}</b><span>${esc(p.surface ? 'in the ' + p.room : '')}${s.session ? (p.surface ? ', ' : '') + esc(s.session) + ' walk-through' : ''}${s.when ? '<br>' + esc(s.when) : ''}</span></div>`; }).join('');
+  return `<div class="trail ${animate ? 'animate' : ''}"><svg height="18" width="100%">${n > 1 ? `<line class="line" x1="${x(0)}%" y1="9" x2="${x(n - 1)}%" y2="9"/>` : ''}${dots}</svg><div class="labels" style="grid-template-columns:repeat(${n}, 1fr)">${labels}</div></div>`;
+}
+
+// ---------- locate answer: light by default, evidence on demand
+function conversational(r) {
+  // "Your black wallet was last seen here, on the metal appliance top in the laundry room, at 8:38 PM. Before that it was on the counter in the kitchen."
+  const c = r.card, t = (r.text || '').trim();
+  const head = norm(c.label).split(' ').pop(), plural = /s$/.test(head) && !/ss$/.test(head) && !/(glass|lens|dress)$/.test(head) || /glasses|headphones|scissors|pants|shorts/.test(head);
+  const first = `Your ${c.label} ${plural ? 'were' : 'was'} last seen here, on the ${phrase(c.place)}, ${c.when || ''}.`.replace(', .', '.');
+  const rest = t.replace(/^Last seen[^.]*\./, '').trim();
+  return (first + ' ' + rest).trim();
+}
+function locateHTML(r) {
+  const c = r.card; CARDS[c.sighting_id] = c;
+  const trail = (r.trail && r.trail.length) ? r.trail : [{place: c.place, when: c.when}];
+  const n = trail.length;
+  return `
+    <div class="evidence open" id="ev-${c.sighting_id}"><div></div></div>
+    <div class="actions">
+      <button class="act" id="wb-${c.sighting_id}" onclick="playWindow(${c.sighting_id})"><span class="tri"></span>Play the moment</button>
+      <button class="act" onclick="showDetail(${c.object_id})">Every sighting</button>
+      <button class="act" id="det-${c.sighting_id}" onclick="toggleDetail(${c.sighting_id})">Where it has been</button>
+    </div>
+    <div class="detail" id="dt-${c.sighting_id}"><div>${trailHTML(trail, false)}<p class="receipt">Muse Spark named it, SAM 3.1 cut it out, DINOv2 and Spark matched it across ${n} walk-through${n === 1 ? '' : 's'}${r.voice ? ', Muse Voice heard you' : ''}.</p></div></div>`;
+}
+function toggleDetail(sid) {
+  const d = $('#dt-' + sid), b = $('#det-' + sid); if (!d) return;
+  const on = d.classList.toggle('open'); b.classList.toggle('on', on);
+  if (on) { const t = d.querySelector('.trail'); if (t) { t.classList.remove('animate'); void t.offsetWidth; t.classList.add('animate'); } }
+}
+function collapseEvidence() {       // the next question folds every picture and option away; the words stay
+  document.querySelectorAll('.turn.me').forEach(t => { const x = t.querySelector('.extra'); if (x && x.firstElementChild.children.length) { x.classList.add('folded'); t.classList.add('folded'); } });
+}
+function showEvidence(sid) {
+  const c = CARDS[sid], ev = $('#ev-' + sid); if (!c || !ev) return;
+  if (!ev.querySelector('.stack')) {
+    const sess = (c.__session || '');
+    ev.firstElementChild.innerHTML = `<div class="stack" id="stack-${sid}">
+      ${c.frame_url ? `<img class="plain" src="${c.frame_url}" alt="" onerror="this.remove(); revealFound(${sid}, 0)">` : ''}
+      <img class="mask" src="${c.overlay_url}" alt="${esc(c.label)} highlighted in the frame" onload="revealFound(${sid}, ${c.frame_url ? 450 : 0}, this)">
+      <div class="halo"></div>
+      <span class="tag">${esc(c.label)}, ${esc(phrase(c.place))}${c.t_s ? `, ${c.t_s} s into the walk-through` : ''}</span>
+    </div>`;
+  }
+  ev.classList.add('open');
+}
+function revealFound(sid, delay, img) {
+  const st = $('#stack-' + sid), c = CARDS[sid]; if (!st) return;
+  if (img && c && c.box && img.naturalWidth) {
+    const [x1, y1, x2, y2] = c.box, W = img.naturalWidth, H = img.naturalHeight, pad = 8, pl = st.querySelector('.halo');
+    pl.style.left = `${Math.max(0, (x1 - pad) / W * 100)}%`; pl.style.top = `${Math.max(0, (y1 - pad) / H * 100)}%`;
+    pl.style.width = `${Math.min(100, (x2 - x1 + 2 * pad) / W * 100)}%`; pl.style.height = `${Math.min(100, (y2 - y1 + 2 * pad) / H * 100)}%`;
+  }
+  setTimeout(() => st.classList.add('found'), delay);
+}
 async function playWindow(sid) {
-  const b = $('#wb-' + sid); b.disabled = true; b.textContent = 'Tracking with SAM 3.1…';
+  const b = $('#wb-' + sid); if (!b) return;
+  b.disabled = true; b.innerHTML = '<span class="ring thinking" style="--size:16px"></span>Tracking with SAM 3.1';
   try {
     const r = await j('/api/window/' + sid, {method:'POST'});
-    $('#win-' + sid).innerHTML = `<video src="${r.url}" autoplay muted loop playsinline controls style="margin-top:8px"></video>`;
-    b.textContent = 'Tracked ' + (r.frames[1]-r.frames[0]+1) + ' frames';
-  } catch (e) { b.textContent = STATIC ? 'No tracked clip pre-computed for this one' : 'Tracking failed'; }
+    const ev = $('#ev-' + sid);
+    ev.firstElementChild.innerHTML = `<div class="stack"><video src="${r.url}" autoplay muted loop playsinline></video><span class="tag">SAM 3.1 followed it across ${r.frames[1] - r.frames[0] + 1} frames</span><div class="prog"></div></div>`;
+    const v = ev.querySelector('video'), p = ev.querySelector('.prog');
+    v.addEventListener('timeupdate', () => { if (v.duration) p.style.width = (v.currentTime / v.duration * 100) + '%'; });
+    ev.classList.add('open'); const tn = ev.closest('.turn'); if (tn) unfold(tn);
+    b.innerHTML = '<span class="tri"></span>Playing'; b.classList.add('on');
+    setTimeout(() => ev.scrollIntoView({behavior: 'smooth', block: 'nearest'}), 250);
+  } catch (e) { b.disabled = false; b.innerHTML = STATIC ? 'No tracked clip for this one' : 'Tracking failed'; }
+}
+function optionsHTML(alts, pickable) {
+  return `<div class="options">` + alts.map(a => `<button class="opt" onclick="${pickable ? `ask('where is my ${esc(a.label).replace(/'/g, "\\'")}')` : `showDetail(${a.object_id})`}">${cutImg(a)}<div><b>${esc(a.label)}</b><span>${esc(phrase(a.place)) || 'place unknown'}<br>${esc(a.when || '')}</span></div></button>`).join('') + `</div>`;
 }
 
-function ask(q) { $('#q').value = q; $('#askForm').requestSubmit(); }
-$('#askForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const q = $('#q').value.trim(); if (!q) return;
-  $('#askBtn').disabled = true; $('#answer').innerHTML = '<div class="meta">Thinking…</div>';
-  try {
-    const r = await j('/api/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({q})});
-    let h = `<div class="answer">${esc(r.text)}</div>`;
-    if (r.card) h += cardHTML(r.card);
-    if (r.alternatives?.length) h += `<div class="sub">${r.card ? 'Could also be' : 'Which one?'}</div><div class="alts">` + r.alternatives.map(a => `<div class="alt" onclick="showDetail(${a.object_id})"><img src="${a.crop_url}"><div><b>${esc(a.label)}</b><br><span class="meta">${esc(a.place||'')} · ${esc(a.when)}</span></div></div>`).join('') + `</div>`;
-    if (r.changes?.length) h += `<div class="timeline" style="margin-top:10px">` + changesHTML(r.changes) + `</div>`;
-    if (r.history?.length) h += `<div class="alts">` + r.history.map(a => `<div class="alt"><img src="${a.overlay_url}" style="aspect-ratio:auto"><div class="meta"><b>${esc(a.place)}</b><br>${esc(a.when)}</div></div>`).join('') + `</div>`;
-    if (r.suggestions?.length) h += `<div class="chips">` + r.suggestions.map(s => `<span class="chip" onclick="ask('where is my ${esc(s)}')">${esc(s)}</span>`).join('') + `</div>`;
-    $('#answer').innerHTML = h;
-    $('#answer').scrollIntoView({behavior:'smooth', block:'nearest'});
-  } catch (e) { $('#answer').innerHTML = `<div class="meta">Error: ${esc(e)}</div>`; }
-  $('#askBtn').disabled = false;
-};
-async function askObj(id) { const o = (await j('/api/objects')).objects.find(x => x.id === id); if (o) ask('where is my ' + o.label); }
-
-function changeHTML(c) {
+// ---------- what changed: rows
+const arrow = `<svg viewBox="0 0 26 16" aria-hidden="true"><path d="M2 8 H21 M15 2.5 L21.5 8 L15 13.5" fill="none" stroke="url(#museLine)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+function rowHTML(c) {
   const b = c.before_sighting_card, a = c.after_sighting_card;
-  const ev = c.evidence || {};
-  const n = (e) => e ? `${e[0]} sighting${e[0]===1?'':'s'}` : '';
   const kind = c.kind === 'disappeared' ? 'not seen' : c.kind;
-  return `<div class="change ${c.confidence||''}" onclick="showDetail(${c.object_id})">
-    <div>${b ? `<img src="${b.crop_url}" title="before: ${esc(c.from||'')} (${n(ev.before)})">` : '<div class="ph">not seen before</div>'}</div>
-    <div><span class="kind ${c.kind}">${kind}</span> <b>${esc(c.label)}</b><br><span class="meta">${esc(c.from||'—')} → ${esc(c.to||'— not found')} · ${esc(c.when)}${c.note ? ' · ' + esc(c.note) : ''}</span></div>
-    <div>${a ? `<img src="${a.crop_url}" title="after: ${esc(c.to||'')} (${n(ev.after)})">` : '<div class="ph">not seen in the latest clip</div>'}</div>
-  </div>`;
+  const route = c.kind === 'moved' ? `from the <em>${esc(phrase(c.from))}</em> to the <em>${esc(phrase(c.to))}</em>`
+    : c.kind === 'new' ? `first seen on the <em>${esc(phrase(c.to))}</em>`
+    : c.kind === 'disappeared' ? `was on the <em>${esc(phrase(c.from))}</em>; filmed again, not there` : `${esc(phrase(c.from))} to ${esc(phrase(c.to))}`;
+  return `<button class="row" onclick="showDetail(${c.object_id})">
+    ${b ? cutImg(b) : '<div class="ph"></div>'}${arrow}${a ? cutImg(a) : '<div class="ph"></div>'}
+    <div class="txt"><b><span class="kind ${c.kind}">${kind}</span>${esc(c.label)}</b><span>${route}${c.confidence !== 'high' ? ' — glimpsed once, less sure' : ''}</span></div>
+  </button>`;
 }
-function changesHTML(changes, note) {
-  if (!changes.length) return '<div class="empty">Nothing moved in that window.</div>';
+function habitRow(r) {
+  const now = r.now_card, usual = r.usual_card;
+  const text = r.kind === 'away' ? `now on the <em>${esc(phrase(r.now))}</em>; ${esc(r.history)} it was on the <em>${esc(phrase(r.usual))}</em>` : `back on the <em>${esc(phrase(r.usual))}</em>, ${esc(r.history)}`;
+  return `<button class="row" onclick="showDetail(${r.object_id})">${usual ? cutImg(usual) : '<div class="ph"></div>'}${arrow}${now ? cutImg(now) : '<div class="ph"></div>'}
+    <div class="txt"><b><span class="kind ${r.kind}">${r.kind === 'away' ? 'out of place' : 'back in place'}</span>${esc(r.label)}</b><span>${text}</span></div></button>`;
+}
+function statsHTML(changes) {
+  const sure = changes.filter(c => c.confidence === 'high');
+  const n = k => sure.filter(c => c.kind === k).length;
+  const low = changes.length - sure.length;
+  return `<div class="stats">` + [n('moved') ? `<span class="pill moved">${n('moved')} moved</span>` : '', n('new') ? `<span class="pill new">${n('new')} new</span>` : '',
+          n('disappeared') ? `<span class="pill gone">${n('disappeared')} not seen</span>` : '', low ? `<span class="pill low">${low} less sure</span>` : ''].join('') + `</div>`;
+}
+function changesHTML(changes, habits) {
+  if (!changes.length) return '<p class="empty">Nothing I can see moved in that window.</p>';
   const sure = changes.filter(c => c.confidence === 'high'), unsure = changes.filter(c => c.confidence !== 'high');
-  let h = note ? `<div class="meta" style="margin-bottom:8px">${esc(note)}</div>` : '';
-  h += sure.length ? sure.map(changeHTML).join('') : '<div class="empty">Nothing I am sure of.</div>';
-  if (unsure.length) h += `<details><summary>${unsure.length} less sure — each side seen only once</summary><div class="timeline" style="margin-top:8px">` + unsure.map(changeHTML).join('') + '</div></details>';
+  let h = statsHTML(changes);
+  h += sure.length ? `<div class="rows enter">${sure.map((c, i) => rowHTML(c).replace('class="row"', `class="row" style="--i:${i}"`)).join('')}</div>` : '';
+  if (habits && (habits.away?.length || habits.back?.length)) h += `<p class="fine" style="margin-top:6px">Not where it usually lives</p><div class="rows">${[...habits.away, ...habits.back].map(habitRow).join('')}</div>`;
+  if (unsure.length) h += `<details class="more"><summary>${unsure.length} less sure — each glimpsed only once</summary><div class="rows">${unsure.map(rowHTML).join('')}</div></details>`;
+  h += `<div class="actions"><button class="act" onclick="openHome(true)">Watch it on the map</button></div>`;
   return h;
 }
-let sessionOptionsDone = false;
-async function loadChanges() {
-  const v = $('#since').value;
-  const url = v.startsWith('session:') ? '/api/changes?session=' + v.slice(8) : '/api/changes?frm=' + encodeURIComponent(v || 'now-72h');
-  const r = await j(url);
-  $('#changes').innerHTML = changesHTML(r.changes, r.note);
-  if (!sessionOptionsDone && r.sessions?.length > 1) {
-    sessionOptionsDone = true;
-    const sel = $('#since');
-    r.sessions.slice(1).forEach((s, i) => { const o = document.createElement('option'); o.value = 'session:' + s.id; o.textContent = `what the '${s.name}' walk-through changed (${s.when})`; sel.insertBefore(o, sel.options[1 + i]); });
-  }
-}
-$('#refreshChanges').onclick = loadChanges; $('#since').onchange = loadChanges;
 
-async function loadObjects() {
-  const r = await j('/api/objects');
-  $('#gallery').innerHTML = r.objects.length ? r.objects.map(o => `<div class="obj ${o.well_observed ? '' : 'weak'}" onclick="showDetail(${o.id})" title="${o.n_sightings} sightings">
-    ${o.crop_url ? `<img src="${o.crop_url}">` : '<div style="aspect-ratio:1;background:#ddd;border-radius:8px"></div>'}
-    <div class="l">${esc(o.label)}</div><div class="s">${esc(o.last_place||'')}<br>${esc(o.last_seen||'')} · ${esc(o.state === 'disappeared' ? 'not seen' : (o.state||''))}</div></div>`).join('')
-    : '<div class="empty">No objects yet — ingest a clip below.</div>';
+// ---------- ask
+function ask(q, voice) { $('#q').value = q; submitAsk(voice); }
+$('#askForm').onsubmit = e => { e.preventDefault(); submitAsk(false); };
+$('#q').addEventListener('input', () => { if ($('#q').value.length === 1) collapseEvidence(); });
+async function submitAsk(voice) {
+  const q = $('#q').value.trim(); if (!q) return;
+  $('#q').value = ''; collapseEvidence();
+  youTurn(q, voice);
+  $('#askBtn').disabled = true; $('#ring').classList.add('thinking'); $('.ask').classList.add('thinking');
+  const turn = meTurn('Looking through your walk-throughs', true);
+  const say = turn.querySelector('.say'), extra = turn.querySelector('.extra > div');
+  try {
+    const r = await j('/api/ask', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({q})});
+    r.voice = voice; settle(turn);
+    if (r.card) {
+      await streamText(say, conversational(r));
+      extra.innerHTML = locateHTML(r);
+      showEvidence(r.card.sighting_id);
+      if (r.alternatives?.length) extra.insertAdjacentHTML('beforeend', `<p class="fine">Could also be</p>` + optionsHTML(r.alternatives, false));
+      setTimeout(() => turn.scrollIntoView({behavior: 'smooth', block: 'end'}), 700);
+    } else if (r.kind === 'changes_between' || r.changes?.length) {
+      await streamText(say, r.text);
+      extra.innerHTML = `<div class="card">${changesHTML(r.changes || [], r.habits)}</div>`;
+    } else {
+      await streamText(say, r.text);
+      if (r.alternatives?.length) extra.insertAdjacentHTML('beforeend', optionsHTML(r.alternatives, !STATIC));
+      if (r.history?.length) extra.insertAdjacentHTML('beforeend', `<div class="frames">` + r.history.map(a => `<div class="frame"><img src="${a.overlay_url}" alt=""><div class="cap"><b>${esc(phrase(a.place))}</b><span>${esc(a.when)}</span></div></div>`).join('') + `</div>`);
+      if (r.suggestions?.length) extra.insertAdjacentHTML('beforeend', `<div class="chips" style="justify-content:flex-start;margin-top:4px">` + r.suggestions.map(s => `<span class="chip" onclick="ask('where is my ${esc(s)}')">${esc(s)}</span>`).join('') + `</div>`);
+    }
+    turn.scrollIntoView({behavior: 'smooth', block: 'end'});
+  } catch (e) { settle(turn); say.textContent = `Something went wrong: ${e}`; }
+  $('#askBtn').disabled = false; $('#ring').classList.remove('thinking'); $('.ask').classList.remove('thinking');
 }
+
+// ---------- walk-through rail + the system speaks first
+function renderRail() {
+  $('#rail').innerHTML = SESSIONS.list.map((x, i) => `${i ? '<span class="seg"></span>' : ''}<button class="stop ${x.id === SESSIONS.current ? 'current' : ''}" onclick="askSession(${x.id})" title="what the '${esc(x.name)}' walk-through changed"><span class="dot"></span><b>${esc(x.name)}</b><span>${esc(x.when)}</span></button>`).join('');
+}
+async function askSession(id) {
+  const ses = SESSIONS.list.find(x => x.id === id); if (!ses) return;
+  SESSIONS.current = id; renderRail();
+  youTurn(`What did the '${ses.name}' walk-through change?`);
+  const turn = meTurn('Comparing it with the walk-throughs before', true);
+  const r = await j('/api/changes?session=' + id); settle(turn);
+  await streamText(turn.querySelector('.say'), noticeText(r, ses));
+  turn.querySelector('.extra > div').innerHTML = `<div class="card">${changesHTML(r.changes || [], r.habits)}</div>`;
+  turn.scrollIntoView({behavior: 'smooth', block: 'end'});
+}
+function noticeText(r, ses) {
+  const ch = r.changes || [], sure = ch.filter(c => c.confidence === 'high'), n = k => sure.filter(c => c.kind === k).length, low = ch.length - sure.length;
+  const i = SESSIONS.list.findIndex(s => s.id === ses.id), prev = i > 0 ? SESSIONS.list[i - 1] : null;
+  if (!prev) return `'${ses.name}' is the first walk-through, so everything in it is new.`;
+  const bits = [n('moved') && `${n('moved')} thing${n('moved') === 1 ? '' : 's'} moved`, n('new') && `${n('new')} ${n('new') === 1 ? 'is' : 'are'} new`, n('disappeared') && `${n('disappeared')} ${n('disappeared') === 1 ? 'was' : 'were'} not seen`].filter(Boolean);
+  return `Since ${timeOnly(prev.when)}, ${bits.length ? bits.join(', ') : 'nothing moved that could be seen'}${low ? `, and ${low} ${low === 1 ? 'thing was' : 'things were'} only glimpsed once` : ''}.`;
+}
+async function loadSessions() {
+  const r = await j('/api/changes?frm=now-72h');
+  if (!r.sessions?.length) return;
+  SESSIONS.list = r.sessions; SESSIONS.current = r.sessions[r.sessions.length - 1].id; renderRail();
+}
+
+// ---------- your home: the board, with time
+let CUR = 0;
+async function openHome(replay) {
+  if (!BOARD) BOARD = await j('/api/board');
+  const S = BOARD.sessions || [], O = BOARD.objects || [];
+  if (!O.length) { $('#rooms').innerHTML = '<p class="empty">No walk-throughs yet.</p>'; $('#homeDlg').showModal(); return; }
+  if (!$('#rooms').children.length) buildRooms(O);
+  $('#homeStats').textContent = `${O.length} things across ${document.querySelectorAll('.room').length} rooms, ${S.length} walk-through${S.length === 1 ? '' : 's'}`;
+  const d = $('#homeDlg'); if (!d.open) d.showModal();
+  if (replay && S.length > 1) { layoutBoard(0, false); setTimeout(() => layoutBoard(S.length - 1, true), 500); }
+  else layoutBoard(S.length - 1, false);
+}
+function placeAt(o, idx) {
+  const S = BOARD.sessions, sid = S[idx].id;
+  if (o.places[sid]) return {place: o.places[sid].place, ghost: false};
+  for (let i = idx - 1; i >= 0; i--) { const p = o.places[S[i].id]; if (p) return {place: p.place, ghost: true}; }
+  return null;
+}
+function buildRooms(O) {
+  const rooms = {};
+  for (const o of O) for (const t of Object.values(o.places)) { const p = splitPlace(t.place); const r = rooms[p.room] = rooms[p.room] || {n: 0, surfaces: {}}; r.n++; r.surfaces[p.surface] = (r.surfaces[p.surface] || 0) + 1; }
+  const order = Object.keys(rooms).sort((a, b) => rooms[b].n - rooms[a].n), max = Math.max(...order.map(r => rooms[r].n));
+  $('#rooms').innerHTML = order.map(room => {
+    const surfaces = Object.keys(rooms[room].surfaces).sort((a, b) => rooms[room].surfaces[b] - rooms[room].surfaces[a]);
+    const size = rooms[room].n >= max * .6 ? 'xl' : rooms[room].n <= 2 ? 'sm' : '';
+    return `<section class="room ${size}" data-room="${esc(room)}"><h4><span class="nm">${esc(room)}</span><small></small></h4><div class="plinths">` +
+      surfaces.map(s => `<div class="plinth" data-place="${esc(room)} / ${esc(s || 'unknown')}"><span class="lbl">${esc(s || room)}</span></div>`).join('') + `</div></section>`;
+  }).join('');
+}
+function thingEl(o) {
+  let el = document.getElementById('t' + o.id);
+  if (el) return el;
+  el = document.createElement('button'); el.className = 'thing'; el.id = 't' + o.id; el.dataset.id = o.id;
+  el.innerHTML = `${cutImg(o)}<span class="name">${esc(o.label)}</span>`;
+  el.onclick = () => { $('#homeDlg').close(); STATIC ? showDetail(o.id) : ask('where is my ' + o.label); };
+  return el;
+}
+function plinthFor(place) {
+  let p = document.querySelector(`.plinth[data-place="${CSS.escape(place)}"]`);
+  if (!p) { const s = splitPlace(place); const room = document.querySelector(`.room[data-room="${CSS.escape(s.room)}"]`) || document.querySelector('.room'); p = document.createElement('div'); p.className = 'plinth'; p.dataset.place = place; p.innerHTML = `<span class="lbl">${esc(s.surface || s.room)}</span>`; room.querySelector('.plinths').appendChild(p); }
+  return p;
+}
+function layoutBoard(idx, animate) {
+  const S = BOARD.sessions, O = BOARD.objects; CUR = idx;
+  $('#timebar').innerHTML = S.map((s, i) => `${i ? `<span class="seg ${i <= idx ? 'on' : ''}"><i></i></span>` : ''}<button class="stop ${i === idx ? 'on' : ''}" onclick="layoutBoard(${i}, true)"><span class="dot"></span><b>${esc(timeOnly(s.when))}</b><span>${esc(s.name)}</span></button>`).join('');
+  const first = {}; document.querySelectorAll('#rooms .thing').forEach(el => { first[el.dataset.id] = el.getBoundingClientRect(); });
+  const counts = {}, arriving = [];
+  for (const o of O) {
+    const el = thingEl(o), at = placeAt(o, idx);
+    if (!at) { if (el.isConnected) el.remove(); continue; }
+    el.classList.toggle('ghost', at.ghost); el.classList.toggle('maybe', at.ghost && o.state === 'possibly_hidden');
+    const p = plinthFor(at.place);
+    if (el.parentElement !== p) { const fresh = !el.isConnected; p.appendChild(el); if (fresh) arriving.push(el); }
+    if (!at.ghost) { const room = splitPlace(at.place).room; counts[room] = (counts[room] || 0) + 1; }
+  }
+  document.querySelectorAll('.room').forEach(r => { const n = counts[r.dataset.room] || 0; r.querySelector('small').textContent = n === 1 ? '1 thing' : n + ' things'; });
+  document.querySelectorAll('.plinth').forEach(p => p.classList.toggle('empty', !p.querySelector('.thing')));
+  if (!animate) return;
+  const stage = $('#board').getBoundingClientRect(); let i = 0;
+  requestAnimationFrame(() => {
+    for (const el of document.querySelectorAll('#rooms .thing')) {
+      const a = first[el.dataset.id]; if (!a) continue;
+      const b = el.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2) continue;
+      const rise = Math.min(90, Math.hypot(dx, dy) * .18);
+      el.animate([{transform: `translate(${dx}px, ${dy}px)`}, {transform: `translate(${dx / 2}px, ${dy / 2 - rise}px) scale(.94)`, offset: .5}, {transform: 'none'}], {duration: 620, easing: EASE, delay: i * 45, fill: 'both'});
+      const ax = a.left + a.width / 2 - stage.left, ay = a.top + a.height / 2 - stage.top, bx = b.left + b.width / 2 - stage.left, by = b.top + b.height / 2 - stage.top;
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', `M ${ax} ${ay - 10} Q ${(ax + bx) / 2} ${Math.min(ay, by) - Math.max(24, Math.hypot(bx - ax, by - ay) * .18)} ${bx} ${by - 10}`);
+      p.style.animationDelay = `${i * 45}ms, ${i * 45 + 900}ms`; $('#trails').appendChild(p); setTimeout(() => p.remove(), i * 45 + 1800);
+      i++;
+    }
+    for (const el of arriving) el.animate([{opacity: 0, transform: 'scale(.6)'}, {opacity: 1, transform: 'none'}], {duration: 400, easing: EASE, delay: 200 + i * 40, fill: 'both'});
+  });
+}
+
+// ---------- object detail (sheet)
 async function showDetail(id) {
   const r = await j('/api/objects/' + id + '/sightings');
-  const o = r.object || {};
-  const sess = (r.sessions || []);
-  let h = `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px">
-    <div class="row" style="justify-content:space-between"><b style="font-size:17px">${esc(o.label)}</b><span class="meta">${esc(o.category||'')} · ${r.sightings.length} sightings · ${esc(o.state === 'disappeared' ? 'not seen since' : o.state||'')}</span>
-      <span class="chip" onclick="ask('where is my ${esc(o.label).replace(/'/g, "\\'")}')">ask</span><span class="chip" onclick="$('#detail').innerHTML=''">close</span></div>`;
+  const o = r.object || {}, sess = r.sessions || [];
+  const state = o.state === 'disappeared' ? 'not seen since the last walk-through' : o.state === 'possibly_hidden' ? 'possibly still where it was, out of view' : (o.state || '').replace('_', ' ');
+  let h = `<div class="dlg-head"><div><h3>${esc(o.label)}</h3><span class="state">${esc(o.category || '')}${o.category ? ', ' : ''}${r.sightings.length} sightings, ${esc(state)}</span></div>
+    <div class="right">${STATIC ? '' : `<button class="act" onclick="$('#dlg').close(); ask('where is my ${esc(o.label).replace(/'/g, "\\'")}')">Ask about it</button>`}<button class="close" onclick="$('#dlg').close()" aria-label="Close">×</button></div></div>`;
   if (sess.length) {
-    h += `<div class="sessions" style="grid-template-columns:repeat(${Math.min(sess.length, 3)}, minmax(200px,1fr))">` + sess.map((s, i) => `<div class="sess"><div class="t">${esc(s.session)} · ${esc(s.when)}</div><img src="${s.overlay_url}" onclick="window.open('${s.overlay_url}')"><div style="margin-top:6px"><b>${esc(s.place)}</b> <span class="meta">· ${s.n} sighting${s.n===1?'':'s'}</span>${i > 0 && sess[i-1].place !== s.place ? ' <span class="kind moved">moved</span>' : (i > 0 ? ' <span class="kind">same place</span>' : '')}</div></div>`).join('') + `</div>`;
+    h += trailHTML(sess.map(s => ({place: s.place, when: s.when, session: s.session})), true);
+    h += `<div class="frames">` + sess.map((s, i) => `<div class="frame"><img src="${s.overlay_url}" alt="" onclick="window.open('${s.overlay_url}')"><div class="cap"><b>${esc(phrase(s.place))}</b><span>${esc(s.session)} walk-through, ${esc(s.when)} — ${s.n} sighting${s.n === 1 ? '' : 's'}${i > 0 && sess[i - 1].place !== s.place ? ', moved' : (i > 0 ? ', same spot' : '')}</span></div></div>`).join('') + `</div>`;
   }
-  if (r.events?.length) h += `<div class="events">` + r.events.map(e => `${esc(e.when)} · <b>${esc(e.kind === 'disappeared' ? 'not seen' : e.kind)}</b> ${esc(e.note||'')}`).join('<br>') + `</div>`;
-  h += `<details style="margin-top:8px"><summary>all ${r.sightings.length} sightings</summary><div class="alts">` +
-    r.sightings.map(s => `<div class="alt" onclick="window.open('${s.overlay_url}')"><img src="${s.crop_url}"><div class="meta"><b>${esc(s.place||'')}</b><br>${esc(s.session||'')} · frame ${s.frame_idx} · q ${s.quality}</div></div>`).join('') + '</div></details></div>';
-  $('#detail').innerHTML = h;
-  $('#detail').scrollIntoView({behavior:'smooth', block:'nearest'});
+  h += `<details class="more"><summary>All ${r.sightings.length} sightings</summary><div class="sightings">` +
+    r.sightings.map(s => `<div><img src="${s.crop_url}" alt="" onclick="window.open('${s.overlay_url}')"><div class="cap">${esc(phrase(s.place))}<br>${esc(s.session || '')}</div></div>`).join('') + '</div></details>';
+  $('#dlgBody').innerHTML = h;
+  const d = $('#dlg'); if (!d.open) d.showModal();
 }
+for (const id of ['dlg', 'homeDlg', 'pendDlg', 'clipsDlg']) document.getElementById(id).addEventListener('click', e => { if (e.target.id === id) e.target.close(); });
 
+// ---------- needs your call
 async function loadPending() {
   const r = await j('/api/pending');
-  $('#pending').innerHTML = r.pending.length ? r.pending.map(p => `<div class="pending">
-    <div><img src="${p.crop_a_url}"><div class="meta">${esc(p.label_a)}</div></div>
-    <div><img src="${p.crop_b_url}"><div class="meta">${esc(p.label_b)}</div></div>
-    <div><div class="meta" style="margin-bottom:8px">Same object? look-alike score ${(+p.sim).toFixed(2)}${p.spark?.reason ? '<br>' + esc(p.spark.reason) : ''}</div>
-      <button onclick="merge(${p.id}, true)">Same object</button> <button onclick="merge(${p.id}, false)">Different</button></div>
-  </div>`).join('') : '<div class="empty">Nothing ambiguous right now.</div>';
+  const n = r.pending?.length || 0;
+  $('#pendBtn').hidden = !n; $('#pendN').textContent = n;
+  $('#pending').innerHTML = n ? r.pending.map(p => `<div class="pend">
+    <div><img src="${p.crop_a_url}" alt=""><div class="cap">${esc(p.label_a)}</div></div>
+    <div><img src="${p.crop_b_url}" alt=""><div class="cap">${esc(p.label_b)}</div></div>
+    <div><div class="cap" style="margin:0 0 10px">Look-alike score ${(+p.sim).toFixed(2)}${p.spark?.reason ? '. Spark: ' + esc(p.spark.reason) : ''}</div>
+      <button class="act primary" onclick="merge(${p.id}, true)">Same thing</button> <button class="act" onclick="merge(${p.id}, false)">Different</button></div>
+  </div>`).join('') : '<p class="empty">Nothing to decide right now.</p>';
 }
-async function merge(id, same) { await j('/api/merge', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pending_id:id, same})}); loadPending(); loadObjects(); loadChanges(); }
+function openPending() { $('#pendDlg').showModal(); }
+async function merge(id, same) { await j('/api/merge', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({pending_id:id, same})}); BOARD = null; $('#rooms').innerHTML = ''; loadPending(); }
 
-$('#upForm').onsubmit = async (e) => {
-  e.preventDefault();
-  if (STATIC) { alert('Static demo: ingestion needs the server + API key. See the README.'); return; }
-  const fd = new FormData(); fd.append('file', $('#file').files[0]); fd.append('session', $('#session').value);
-  await fetch('/api/clips', {method:'POST', body: fd});
-  $('#file').value = '';
-  loadClips();
-};
+// ---------- walk-throughs (sheet)
+$('#plusBtn').onclick = () => { if (STATIC) { $('#hint').textContent = 'Adding a walk-through needs the live app and an API key.'; return; } loadClips(); $('#clipsDlg').showModal(); };
+$('#upForm').onsubmit = async (e) => { e.preventDefault(); const fd = new FormData(); fd.append('file', $('#file').files[0]); fd.append('session', $('#session').value); await fetch('/api/clips', {method:'POST', body: fd}); $('#file').value = ''; loadClips(); };
 async function loadClips() {
   const r = await j('/api/clips');
-  const prog = Object.entries(r.progress || {}).filter(([k,v]) => v.status !== 'done').map(([k,v]) => `<div class="clip" style="display:block"><div>${esc(v.name)} — ${esc(v.status)}</div><div class="bar"><i style="width:${v.status==='error'?100:Math.min(95, v.log.length*4)}%"></i></div><pre class="log">${esc(v.log.slice(-6).join('\n'))}${v.error ? '\n' + esc(v.error) : ''}</pre></div>`);
-  const done = r.clips.map(c => `<div class="clip"><span>${esc(c.name)} <span class="meta">· ${esc(c.session||'')} · ${esc(c.when)} · ${c.duration_s}s</span></span><span class="meta">${c.n_objects} objects · ${c.n_sightings} sightings · ${esc(c.status)}</span></div>`);
-  $('#clips').innerHTML = prog.concat(done).join('') || '<div class="empty">No clips yet.</div>';
+  const prog = Object.entries(r.progress || {}).filter(([k, v]) => v.status !== 'done').map(([k, v]) => `<div class="clip" style="display:block"><div>${esc(v.name)} — ${esc(v.status)}</div><div class="bar"><i style="width:${v.status === 'error' ? 100 : Math.min(95, v.log.length * 4)}%"></i></div><pre class="log">${esc(v.log.slice(-6).join('\n'))}${v.error ? '\n' + esc(v.error) : ''}</pre></div>`);
+  const done = (r.clips || []).map(c => `<div class="clip"><span><b>${esc(c.session || c.name)}</b> <span class="meta">${esc(c.when)}, ${c.duration_s}s</span></span><span class="meta">${c.n_objects} things, ${c.n_sightings} sightings</span></div>`);
+  $('#clips').innerHTML = prog.concat(done).join('') || '<p class="empty">No walk-throughs yet.</p>';
   const busy = Object.values(r.progress || {}).some(v => v.status === 'ingesting' || v.status === 'queued');
-  if (busy) setTimeout(loadClips, 2000); else { loadObjects(); loadChanges(); loadPending(); }
+  if (busy) { window.__wasBusy = true; setTimeout(loadClips, 2000); } else if (window.__wasBusy) { window.__wasBusy = false; BOARD = null; $('#rooms').innerHTML = ''; loadSessions(); loadPending(); }
 }
-// ---- voice: hold the mic, speak, release -> WAV (mono 16 kHz PCM) -> Muse Voice Transcribe -> ask
+
+// ---------- voice: tap the ring, speak, it stops when you stop
 let rec = null;
 function wavFromFloat(chunks, inRate, outRate = 16000) {
   const total = chunks.reduce((n, c) => n + c.length, 0);
@@ -283,42 +669,58 @@ function wavFromFloat(chunks, inRate, outRate = 16000) {
   new Int16Array(buf, 44).set(pcm);
   return new Blob([buf], {type: 'audio/wav'});
 }
+function setListening(on) { $('#micBtn').classList.toggle('rec', on); $('#micRing').classList.toggle('listening', on); $('.ask').classList.toggle('listening', on); if (!on) $('#micRing').style.setProperty('--lvl', 0); }
 async function micStart() {
-  if (STATIC) { $('#q').placeholder = 'Voice needs the server + API key (static demo)'; return; }
-  if (rec) return;
-  const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const srcNode = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 1, 1);
-  const chunks = [];
+  if (STATIC) { $('#q').placeholder = 'Voice needs the live app; type a question instead'; return; }
+  if (rec) return micStop();
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true}}); }
+  catch (e) { $('#q').placeholder = e.name === 'NotAllowedError' ? 'Microphone is blocked for this site; allow it from the icon in the address bar' : `Microphone unavailable (${e.name})`; return; }
+  const ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') await ctx.resume();
+  const srcNode = ctx.createMediaStreamSource(stream), proc = ctx.createScriptProcessor(4096, 1, 1), an = ctx.createAnalyser(); an.fftSize = 1024;
+  const chunks = [], level = new Float32Array(an.fftSize);
+  const state = {stream, ctx, proc, chunks, spoke: false, quietSince: 0, started: performance.now(), raf: 0};
   proc.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-  srcNode.connect(proc); proc.connect(ctx.destination);
-  rec = {stream, ctx, proc, chunks};
-  $('#micBtn').classList.add('rec'); $('#q').placeholder = 'Listening… release to ask';
+  srcNode.connect(an); an.connect(proc); proc.connect(ctx.destination);
+  rec = state; setListening(true); $('#q').value = ''; $('#q').placeholder = 'Listening…';
+  const tick = () => {
+    if (rec !== state) return;
+    an.getFloatTimeDomainData(level); let sum = 0; for (let i = 0; i < level.length; i++) sum += level[i] * level[i];
+    const rms = Math.sqrt(sum / level.length), lvl = Math.min(1, rms * 9); $('#micRing').style.setProperty('--lvl', lvl.toFixed(3));
+    const now = performance.now();
+    if (rms > 0.025) { state.spoke = true; state.quietSince = 0; } else if (state.spoke) { if (!state.quietSince) state.quietSince = now; else if (now - state.quietSince > 1100) return micStop(); }
+    if (now - state.started > 12000) return micStop();
+    state.raf = requestAnimationFrame(tick);
+  };
+  state.raf = requestAnimationFrame(tick);
 }
 async function micStop() {
   if (!rec) return;
-  const {stream, ctx, proc, chunks} = rec; rec = null;
-  proc.disconnect(); stream.getTracks().forEach(t => t.stop());
-  const rate = ctx.sampleRate; await ctx.close();
-  $('#micBtn').classList.remove('rec'); $('#q').placeholder = 'Transcribing with Muse Voice…';
-  const wav = wavFromFloat(chunks, rate);
-  const fd = new FormData(); fd.append('audio', wav, 'question.wav');
+  const {stream, ctx, proc, chunks, raf} = rec; rec = null; cancelAnimationFrame(raf);
+  proc.disconnect(); stream.getTracks().forEach(t => t.stop()); const rate = ctx.sampleRate; await ctx.close(); setListening(false);
+  if (chunks.length < 4) { $('#q').placeholder = 'Where are my…'; return; }
+  $('#micRing').classList.add('thinking'); $('#q').placeholder = 'Muse Voice is writing it down…';
+  const fd = new FormData(); fd.append('audio', wavFromFloat(chunks, rate), 'question.wav');
   try {
-    const r = await fetch('/api/transcribe', {method: 'POST', body: fd}).then(r => r.json());
-    if (r.text) { $('#q').value = r.text; $('#askForm').requestSubmit(); } else $('#q').placeholder = "Didn't catch that — try again";
-  } catch (e) { $('#q').placeholder = 'Transcription failed'; }
+    const r = await fetch('/api/transcribe', {method: 'POST', body: fd}); const body = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(body.detail || r.status);
+    if (body.text) await typeInto($('#q'), body.text, () => submitAsk(true)); else $('#q').placeholder = "Didn't catch that; tap the ring and try again";
+  } catch (e) { $('#q').placeholder = 'Transcription failed: ' + String(e.message || e).slice(0, 80); }
+  $('#micRing').classList.remove('thinking'); if (!$('#q').value) $('#q').placeholder = 'Where are my…';
 }
-const mic = $('#micBtn');
-mic.onmousedown = micStart; mic.onmouseup = micStop; mic.onmouseleave = () => { if (rec) micStop(); };
-mic.ontouchstart = e => { e.preventDefault(); micStart(); }; mic.ontouchend = e => { e.preventDefault(); micStop(); };
+function typeInto(input, text, done) {
+  return new Promise(res => { let i = 0; input.value = ''; const step = () => { input.value = text.slice(0, ++i); if (i < text.length) setTimeout(step, 22); else setTimeout(() => { done && done(); res(); }, 350); }; step(); });
+}
+$('#micBtn').onclick = () => (rec ? micStop() : micStart());
+document.addEventListener('keydown', e => { if (e.key === ' ' && e.target === document.body && !STATIC) { e.preventDefault(); rec ? micStop() : micStart(); } });
 
 async function loadSuggestions() {
-  let qs = ["where did I leave my car keys?", "where is my wallet?", "what did the after walk-through change?"];
-  if (STATIC) { try { QUESTIONS = (await fetch('api/questions.json').then(r => r.json())).questions; qs = QUESTIONS.map(x => x.q); } catch (e) {} }
-  $('#suggest').innerHTML = qs.map(q => `<span class="chip" onclick="ask('${esc(q).replace(/'/g, "\\'")}')">${esc(q)}</span>`).join('');
+  let qs = ["where are my keys?", "where is my wallet?", "where is my watch?"];
+  if (STATIC) { try { QUESTIONS = (await fetch('api/questions.json').then(r => r.json())).questions; qs = QUESTIONS.map(x => x.q).filter(q => !/black laptop|water bottle|since this morning|black car keys|walk-through change/.test(q)).slice(0, 5); } catch (e) {} }
+  $('#suggest').innerHTML = qs.map(q => `<span class="chip" tabindex="0" onclick="ask('${esc(q).replace(/'/g, "\\'")}')" onkeydown="if(event.key==='Enter')ask('${esc(q).replace(/'/g, "\\'")}')">${esc(q)}</span>`).join('');
 }
-if (STATIC) $('#staticBanner').style.display = 'block';
-loadSuggestions(); loadClips(); loadObjects(); loadChanges(); loadPending();
+if (STATIC) { $('#hint').textContent = 'Pre-computed from two real walk-throughs of one home. Pick a suggestion or type one of them.'; }
+loadSuggestions(); loadSessions(); loadPending(); if (!STATIC) loadClips();
 </script>
 </body>
 </html>

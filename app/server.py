@@ -170,6 +170,27 @@ def media_overlay(sighting_id: int):
         raise HTTPException(404, str(e))
 
 
+@app.get("/api/board")
+def board():
+    return api.board(db.connect())
+
+
+@app.get("/media/cutout/{sighting_id}.png")
+def media_cutout(sighting_id: int):
+    p = api.cutout_path(db.connect(), sighting_id)
+    if not p or not p.exists():
+        raise HTTPException(404)
+    return FileResponse(p, media_type="image/png")
+
+
+@app.get("/media/frame/{sighting_id}.jpg")
+def media_frame(sighting_id: int):
+    p = api.frame_path(db.connect(), sighting_id)
+    if not p or not p.exists():
+        raise HTTPException(404)
+    return FileResponse(p, media_type="image/jpeg")
+
+
 @app.get("/media/window/{sighting_id}.mp4")
 def media_window(sighting_id: int):
     p = api.window_path(sighting_id)

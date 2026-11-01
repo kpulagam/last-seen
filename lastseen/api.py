@@ -9,13 +9,15 @@ from __future__ import annotations
 import time
 from pathlib import Path
 
-from . import config, db, query, reid, render, state
+from . import config, db, habits, query, reid, render, state
 
 
 def _decorate(card: dict | None) -> dict | None:
     if not card:
         return card
     card["overlay_url"] = f"media/overlay/{card['sighting_id']}.jpg"
+    card["frame_url"] = f"media/frame/{card['sighting_id']}.jpg"       # the untouched keyframe, for the reveal
+    card["cutout_url"] = f"media/cutout/{card['sighting_id']}.png"      # the object alone, on transparency
     if card.get("crop"):
         card["crop_url"] = f"media/crops/{card['crop']}"
     return card
@@ -26,15 +28,50 @@ def _sighting_row(con, sid: int) -> dict | None:
                        "JOIN clips c ON c.clip_id=s.clip_id WHERE s.id=?", (sid,))
 
 
+def session_trail(con, object_id: int) -> list[dict]:
+    """The object's agreed place per walk-through, in shooting order: what the UI draws as the trail."""
+    out = []
+    for ses in db.rows(con, "SELECT DISTINCT s.session_id AS id, ses.name, MIN(s.ts) AS t0 FROM sightings s JOIN sessions ses ON ses.id=s.session_id "
+                            "WHERE s.object_id=? GROUP BY s.session_id ORDER BY t0", (object_id,)):
+        rep = state.session_place(con, object_id, ses["id"])
+        if rep:
+            n = db.one(con, "SELECT COUNT(*) AS n FROM sightings WHERE object_id=? AND session_id=?", (object_id, ses["id"]))["n"]
+            out.append({"session_id": ses["id"], "session": ses["name"], "place": f"{rep['p_room']} / {rep['p_surface']}",
+                        "sighting_id": rep["id"], "overlay_url": f"media/overlay/{rep['id']}.jpg",
+                        "when": query.fmt_ts(rep["ts"]), "n": int(n)})
+    return out
+
+
 def ask(con, client, question: str) -> dict:
     res = query.answer(con, client, question)
     res["card"] = _decorate(res.get("card"))
+    if res["card"] and res["card"].get("object_id"):
+        res["trail"] = session_trail(con, int(res["card"]["object_id"]))
     res["alternatives"] = [_decorate(a) for a in res.get("alternatives", [])]
     res["history"] = [_decorate(a) for a in res.get("history", [])]
     for c in res.get("changes", []):
         c["before_sighting_card"] = _decorate(c.get("before_sighting_card"))
         c["after_sighting_card"] = _decorate(c.get("after_sighting_card"))
+    if res.get("kind") == "changes_between":
+        h = out_of_place(con, None)      # habits are judged on the latest walk-through
+        if h["away"] or h["back"]:
+            res["habits"] = h
+            n = len(h["away"])
+            if n:
+                res["text"] = (res.get("text") or "").rstrip() + f" {n} thing{'s are' if n != 1 else ' is'} not where " \
+                              f"{'they' if n != 1 else 'it'} usually {'live' if n != 1 else 'lives'}."
     return res
+
+
+def out_of_place(con, session: int | None = None) -> dict:
+    """Habit view: objects the latest (or given) walk-through shows away from / back at their usual place."""
+    h = habits.out_of_place(con, session)
+    for rec in h["away"] + h["back"]:
+        for key in ("now_sighting_id", "usual_sighting_id"):
+            s = _sighting_row(con, rec[key])
+            rec[key.replace("_sighting_id", "_card")] = _decorate(query.sighting_card(con, s)) if s else None
+        rec["when"] = query.fmt_ts(rec.get("ts"))
+    return h
 
 
 def objects(con) -> dict:
@@ -42,6 +79,7 @@ def objects(con) -> dict:
     for o in cat:
         s = query.best_sighting(con, o["id"])
         o["crop_url"] = f"media/crops/{Path(s['crop_path']).name}" if s and s.get("crop_path") else None
+        o["cutout_url"] = f"media/cutout/{s['id']}.png" if s and s.get("mask_rle") else None
         o["sighting_id"] = s["id"] if s else None
     # well-observed objects first, then by recency
     cat.sort(key=lambda o: (o.get("well_observed", False), o.get("n_sightings", 0)), reverse=True)
@@ -59,16 +97,7 @@ def object_sightings(con, object_id: int) -> dict:
         card["session_id"] = r["session_id"]
         card["quality"] = round(float(r["quality"] or 0), 3)
         out.append(card)
-    # per-session summary: the agreed place and the representative sighting
-    sessions = []
-    for ses in db.rows(con, "SELECT DISTINCT s.session_id AS id, ses.name FROM sightings s JOIN sessions ses ON ses.id=s.session_id "
-                            "WHERE s.object_id=? ORDER BY s.session_id", (object_id,)):
-        rep = state.session_place(con, object_id, ses["id"])
-        if rep:
-            n = db.one(con, "SELECT COUNT(*) AS n FROM sightings WHERE object_id=? AND session_id=?", (object_id, ses["id"]))["n"]
-            sessions.append({"session_id": ses["id"], "session": ses["name"], "place": f"{rep['p_room']} / {rep['p_surface']}",
-                             "sighting_id": rep["id"], "overlay_url": f"media/overlay/{rep['id']}.jpg",
-                             "when": query.fmt_ts(rep["ts"]), "n": int(n)})
+    sessions = session_trail(con, object_id)
     obj = db.one(con, "SELECT id, canonical_label, user_name, category, state, attributes_json FROM objects WHERE id=?", (object_id,))
     events = db.rows(con, """SELECT e.kind, e.note, e.ts, ses.name AS session FROM object_events e LEFT JOIN sessions ses ON ses.id=e.session_id
                              WHERE e.object_id=? ORDER BY e.ts""", (object_id,))
@@ -111,7 +140,8 @@ def changes(con, frm: str = "today_start", to: str = "now", session: int | None 
                 s = _sighting_row(con, sid)
                 c[key + "_card"] = _decorate(query.sighting_card(con, s)) if s else None
         c["when"] = query.fmt_ts(c.get("ts"))
-    return {"changes": out, "from": t_from, "to": t_to, "note": note, "sessions": sessions(con)}
+    return {"changes": out, "from": t_from, "to": t_to, "note": note, "sessions": sessions(con),
+            "habits": out_of_place(con, session)}
 
 
 def pending(con) -> dict:
@@ -177,6 +207,39 @@ def clips(con, progress: dict | None = None) -> dict:
         r["when"] = query.fmt_ts(r["recorded_at"])
         r["duration_s"] = round(float(r["duration_s"] or 0), 1)
     return {"clips": rows, "progress": progress or {}}
+
+
+def cutout_path(con, sighting_id: int) -> Path | None:
+    """The object cut out on transparency (rendered once, then cached)."""
+    out = config.FRAMES / "cutouts" / f"s_{sighting_id}.png"
+    if out.exists():
+        return out
+    try:
+        return render.cutout_png(con, sighting_id, out)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def board(con) -> dict:
+    """Everything the memory holds, laid out for a picture of the home over time: each object with its
+    cut-out and its place in every walk-through it was seen in."""
+    ses = sessions(con)
+    objs = []
+    for o in query.catalog(con):
+        s = query.best_sighting(con, o["id"])
+        trail = session_trail(con, o["id"])
+        objs.append({**o, "sighting_id": s["id"] if s else None,
+                     "cutout_url": f"media/cutout/{s['id']}.png" if s and s.get("mask_rle") else None,
+                     "crop_url": f"media/crops/{Path(s['crop_path']).name}" if s and s.get("crop_path") else None,
+                     "places": {t["session_id"]: {"place": t["place"], "sighting_id": t["sighting_id"], "when": t["when"], "n": t["n"]} for t in trail}})
+    objs.sort(key=lambda o: (o.get("well_observed", False), o.get("n_sightings", 0)), reverse=True)
+    return {"sessions": ses, "objects": objs}
+
+
+def frame_path(con, sighting_id: int) -> Path | None:
+    """The keyframe a sighting came from, as shot (no mask)."""
+    r = db.one(con, "SELECT k.jpg_path FROM sightings s JOIN keyframes k ON k.id=s.keyframe_id WHERE s.id=?", (sighting_id,))
+    return config.local_path(r["jpg_path"]) if r and r["jpg_path"] else None
 
 
 def overlay_path(con, sighting_id: int) -> Path:

@@ -53,7 +53,7 @@ def main() -> None:
     out = Path(args.out)
     (out / "api" / "ask").mkdir(parents=True, exist_ok=True)
     (out / "api" / "objects").mkdir(parents=True, exist_ok=True)
-    for d in ("crops", "overlay", "window"):
+    for d in ("crops", "overlay", "window", "frame", "cutout"):
         (out / "media" / d).mkdir(parents=True, exist_ok=True)
     con = db.connect(args.db)
     client = None
@@ -71,7 +71,7 @@ def main() -> None:
     def collect(obj) -> None:
         if isinstance(obj, dict):
             for k, v in obj.items():
-                if k in ("crop_url", "overlay_url", "crop_a_url", "crop_b_url", "url") and isinstance(v, str) and v.startswith("media/"):
+                if k in ("crop_url", "overlay_url", "frame_url", "cutout_url", "crop_a_url", "crop_b_url", "url") and isinstance(v, str) and v.startswith("media/"):
                     media.add(v)
                 else:
                     collect(v)
@@ -84,6 +84,7 @@ def main() -> None:
         (out / rel).write_text(json.dumps(payload, default=str))
 
     dump("api/objects.json", api.objects(con))
+    dump("api/board.json", api.board(con))
     dump("api/changes.json", api.changes(con, "now-72h", "now"))
     for ses in api.sessions(con)[1:]:
         dump(f"api/changes_session_{ses['id']}.json", api.changes(con, session=ses["id"]))
@@ -119,6 +120,10 @@ def main() -> None:
                 continue
         elif m.startswith("media/window/"):
             src = api.window_path(int(Path(m).stem))
+        elif m.startswith("media/frame/"):
+            src = api.frame_path(con, int(Path(m).stem))
+        elif m.startswith("media/cutout/"):
+            src = api.cutout_path(con, int(Path(m).stem))
         else:
             continue
         if src and Path(src).exists():

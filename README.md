@@ -14,6 +14,16 @@ new / not seen*.
 
 Built solo for the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026), indie track.
 
+![the app](docs/screenshot.png)
+
+The app is a conversation. You ask — out loud (tap the ring, it stops when you stop) or typed — and
+the answer streams in as a sentence with the thing's trail underneath: hook → counter. Evidence is one
+tap away, never in your face: *Show me* opens the frame and the SAM mask lights up on the object;
+*Play the moment* plays the tracked clip; *Every sighting* shows each walk-through's frame. Clicking a
+walk-through in the header asks what it changed; *Your home* lays out every room, surface and thing
+the memory holds. Live demo (real footage, pre-computed, no key needed):
+https://kpulagam.github.io/last-seen/demo/
+
 ## What Meta models do here
 
 | Model | Used for | Calls per 60 s clip |
@@ -100,6 +110,7 @@ cluster ─Spark attributes─▶ canonical name, category, colours, brand, mark
 re-ID cascade vs the object table: co-occurrence veto → colour veto → thresholds → Spark pairwise → ask the user
 dedupe: looks alike · same name never co-seen · "not seen at P" + "new at P" ─▶ Spark decides
 objects + places (room, surface) ─▶ per-session modal place ─▶ stationary / moved / new / not seen / possibly hidden
+per-object trail across walk-throughs ─▶ usual place (strict majority over ≥ 3 walk-throughs) ─▶ out of place / back in place
 question ─Spark intent over the catalog─▶ SQL ─▶ answer card (+ "before that it was on …", + confidence tiers)
 answer ─SAM 3.1 video, 150 frames both directions─▶ tracked overlay clip
 ```
@@ -164,6 +175,26 @@ The keys were the hard one, and they taught three rules that are now in the code
   re-asked with a leading question, and "not seen" claims built only on blurry glimpses are demoted
   to *less sure*.
 
+## Habits: "usually you hang the keys on the hook"
+
+Every object has a modal place per walk-through, so its *usual place* is the place a strict majority
+of its walk-throughs agree on. From the third walk-through on, the app flags what the latest one shows
+**out of place** ("black car keys: now on the kitchen counter — in both earlier walk-throughs it was
+on the hallway hook") and what is **back in place** after a detour, and a locate answer adds "usually
+it lives on the …" when there is real history. Two walk-throughs that disagree are a move, not a habit,
+so nothing is called "usual" until there is a majority to point at. (`lastseen/habits.py`,
+`tests/test_habits.py`.)
+
+## Walk-throughs, not surveillance
+
+The unit of memory is a clip someone chose to film — a one-minute walk-through, or a ten-second
+pass over the entryway. Every claim is reasoned about what *that* clip's camera actually looked at,
+which is what makes "not seen" and "possibly hidden" honest, and it keeps the cost at cents per clip
+(Spark grounding is about a cent per keyframe; continuous capture at one frame a second would be
+~$40 an hour). The same memory, states and habit rules work unchanged when the capture is
+event-triggered instead — glasses recording a short clip when you come through the door — which is
+where the "you put the keys down somewhere else" alert belongs.
+
 ## Honesty rules in the answers
 
 * A "moved" needs two or more sightings on each side; otherwise it is reported as *less sure*.
@@ -186,11 +217,11 @@ About $0.70 per clip; re-runs hit the cache.
 ## Layout
 
 ```
-lastseen/   meta_client · video · sam_parse · rle · db · prompts · ingest · reid · state · windows · render · query · api
+lastseen/   meta_client · video · sam_parse · rle · db · prompts · ingest · reid · state · habits · windows · render · query · api
 scripts/    smoke_test · ingest · ask · replay · explain · sheet · eval · export_static · bench_embed
 app/        FastAPI server + single-page UI (app/static/index.html); the same UI runs as a static site
 docs/       architecture figure; demo/ = the exported static demo (real data, no key needed)
-tests/      offline end-to-end test with a mock API (python tests/test_pipeline_mock.py)
+tests/      offline end-to-end test with a mock API (tests/test_pipeline_mock.py); habit rules (tests/test_habits.py)
 data/       clips/ frames/ crops/ api_cache/ lastseen.sqlite   (gitignored)
 runs/       per-run API logs                                   (gitignored)
 ```
