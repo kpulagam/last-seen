@@ -17,11 +17,13 @@ Built solo for the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026), 
 ![the app](docs/screenshot.png)
 
 The app is a conversation. You ask — out loud (tap the ring, it stops when you stop) or typed — and
-the answer streams in as a sentence with the thing's trail underneath: hook → counter. Evidence is one
-tap away, never in your face: *Show me* opens the frame and the SAM mask lights up on the object;
-*Play the moment* plays the tracked clip; *Every sighting* shows each walk-through's frame. Clicking a
-walk-through in the header asks what it changed; *Your home* lays out every room, surface and thing
-the memory holds. Live demo (real footage, pre-computed, no key needed):
+the answer comes back as a sentence in a bubble: *"Your black car keys were last seen here, on the
+counter in the kitchen, Fri Oct 30 at 8:38 PM. Before that it was on the hook in the hallway."* The
+proof unfolds beneath it: the frame comes into focus and the SAM mask lights up on the object, with
+*Play the moment* (the tracked clip), *Every sighting* (each walk-through's frame) and *Where it has
+been* (the trail: hook → counter) one tap away. Start typing the next question and the pictures fold
+away; the words stay. Clicking a walk-through in the header asks what it changed; *Your home* lays out
+every room, surface and thing the memory holds. Live demo (real footage, pre-computed, no key needed):
 https://kpulagam.github.io/last-seen/demo/
 
 ## What Meta models do here
@@ -111,7 +113,7 @@ re-ID cascade vs the object table: co-occurrence veto → colour veto → thresh
 dedupe: looks alike · same name never co-seen · "not seen at P" + "new at P" ─▶ Spark decides
 objects + places (room, surface) ─▶ per-session modal place ─▶ stationary / moved / new / not seen / possibly hidden
 per-object trail across walk-throughs ─▶ usual place (strict majority over ≥ 3 walk-throughs) ─▶ out of place / back in place
-question ─Spark intent over the catalog─▶ SQL ─▶ answer card (+ "before that it was on …", + confidence tiers)
+question ─Spark intent over the catalog─▶ SQL ─▶ answer sentence + evidence (+ "before that it was on …", + confidence tiers)
 answer ─SAM 3.1 video, 150 frames both directions─▶ tracked overlay clip
 ```
 
