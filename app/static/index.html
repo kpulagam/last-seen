@@ -56,7 +56,7 @@
   .badge { background:var(--muse); color:#fff; font-size:11px; font-weight:800; padding:1px 7px; border-radius:999px }
 
   /* ---------- thread */
-  main { flex:1; width:100%; max-width:var(--thread); margin:0 auto; padding:10px 20px 150px; display:flex; flex-direction:column; gap:22px }
+  main { flex:1; width:100%; max-width:var(--thread); margin:0 auto; padding:10px 20px 170px; display:flex; flex-direction:column; gap:22px }
   main.empty { justify-content:center; padding-bottom:190px }
   main:not(.empty) { justify-content:flex-end }
   .hero { text-align:center; padding:30px 0 10px; animation:fadein .6s both }
@@ -66,7 +66,7 @@
   .chips { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:18px }
   .chip { padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--surface); font-size:14px; cursor:pointer; color:var(--ink); transition:border-color .15s, background .15s }
   .chip:hover { border-color:var(--b); background:#fdf8ff }
-  .turn { display:flex; flex-direction:column; gap:8px; animation:rise .45s var(--ease) both }
+  .turn { display:flex; flex-direction:column; gap:8px; animation:rise .45s var(--ease) both; scroll-margin-bottom:150px }
   @keyframes rise { from { opacity:0; transform:translateY(12px) } }
   @keyframes fadein { from { opacity:0 } }
   .turn.you { align-items:flex-end }
@@ -366,10 +366,12 @@ function trailHTML(stops, animate = true) {
 }
 
 // ---------- locate answer: light by default, evidence on demand
+function isPlural(label) { const head = norm(label).split(' ').pop(); return /s$/.test(head) && !/ss$/.test(head) && !/(glass|lens|dress)$/.test(head) || /glasses|headphones|scissors|pants|shorts/.test(head); }
+function whereQ(label) { return `where ${isPlural(label) ? 'are' : 'is'} my ${label}?`; }
 function conversational(r) {
   // "Your black wallet was last seen here, on the metal appliance top in the laundry room, at 8:38 PM. Before that it was on the counter in the kitchen."
   const c = r.card, t = (r.text || '').trim();
-  const head = norm(c.label).split(' ').pop(), plural = /s$/.test(head) && !/ss$/.test(head) && !/(glass|lens|dress)$/.test(head) || /glasses|headphones|scissors|pants|shorts/.test(head);
+  const plural = isPlural(c.label);
   const first = `Your ${c.label} ${plural ? 'were' : 'was'} last seen here, on the ${phrase(c.place)}, ${c.when || ''}.`.replace(', .', '.');
   const rest = t.replace(/^Last seen[^.]*\./, '').trim();
   return (first + ' ' + rest).trim();
@@ -432,7 +434,7 @@ async function playWindow(sid) {
   } catch (e) { b.disabled = false; b.innerHTML = STATIC ? 'No tracked clip for this one' : 'Tracking failed'; }
 }
 function optionsHTML(alts, pickable) {
-  return `<div class="options">` + alts.map(a => `<button class="opt" onclick="${pickable ? `ask('where is my ${esc(a.label).replace(/'/g, "\\'")}')` : `showDetail(${a.object_id})`}">${cutImg(a)}<div><b>${esc(a.label)}</b><span>${esc(phrase(a.place)) || 'place unknown'}<br>${esc(a.when || '')}</span></div></button>`).join('') + `</div>`;
+  return `<div class="options">` + alts.map(a => `<button class="opt" onclick="${pickable ? `ask('${esc(whereQ(a.label)).replace(/'/g, "\\'")}')` : `showDetail(${a.object_id})`}">${cutImg(a)}<div><b>${esc(a.label)}</b><span>${esc(phrase(a.place)) || 'place unknown'}<br>${esc(a.when || '')}</span></div></button>`).join('') + `</div>`;
 }
 
 // ---------- what changed: rows
@@ -499,7 +501,7 @@ async function submitAsk(voice) {
       await streamText(say, r.text);
       if (r.alternatives?.length) extra.insertAdjacentHTML('beforeend', optionsHTML(r.alternatives, !STATIC));
       if (r.history?.length) extra.insertAdjacentHTML('beforeend', `<div class="frames">` + r.history.map(a => `<div class="frame"><img src="${a.overlay_url}" alt=""><div class="cap"><b>${esc(phrase(a.place))}</b><span>${esc(a.when)}</span></div></div>`).join('') + `</div>`);
-      if (r.suggestions?.length) extra.insertAdjacentHTML('beforeend', `<div class="chips" style="justify-content:flex-start;margin-top:4px">` + r.suggestions.map(s => `<span class="chip" onclick="ask('where is my ${esc(s)}')">${esc(s)}</span>`).join('') + `</div>`);
+      if (r.suggestions?.length) extra.insertAdjacentHTML('beforeend', `<div class="chips" style="justify-content:flex-start;margin-top:4px">` + r.suggestions.map(s => `<span class="chip" onclick="ask('${esc(whereQ(s)).replace(/'/g, "\\'")}')">${esc(s)}</span>`).join('') + `</div>`);
     }
     turn.scrollIntoView({behavior: 'smooth', block: 'end'});
   } catch (e) { settle(turn); say.textContent = `Something went wrong: ${e}`; }
@@ -512,7 +514,7 @@ function renderRail() {
 }
 async function askSession(id) {
   const ses = SESSIONS.list.find(x => x.id === id); if (!ses) return;
-  SESSIONS.current = id; renderRail();
+  SESSIONS.current = id; renderRail(); collapseEvidence();
   youTurn(`What did the '${ses.name}' walk-through change?`);
   const turn = meTurn('Comparing it with the walk-throughs before', true);
   const r = await j('/api/changes?session=' + id); settle(turn);
@@ -567,7 +569,7 @@ function thingEl(o) {
   if (el) return el;
   el = document.createElement('button'); el.className = 'thing'; el.id = 't' + o.id; el.dataset.id = o.id;
   el.innerHTML = `${cutImg(o)}<span class="name">${esc(o.label)}</span>`;
-  el.onclick = () => { $('#homeDlg').close(); STATIC ? showDetail(o.id) : ask('where is my ' + o.label); };
+  el.onclick = () => { $('#homeDlg').close(); STATIC ? showDetail(o.id) : ask(whereQ(o.label)); };
   return el;
 }
 function plinthFor(place) {
@@ -615,7 +617,7 @@ async function showDetail(id) {
   const o = r.object || {}, sess = r.sessions || [];
   const state = o.state === 'disappeared' ? 'not seen since the last walk-through' : o.state === 'possibly_hidden' ? 'possibly still where it was, out of view' : (o.state || '').replace('_', ' ');
   let h = `<div class="dlg-head"><div><h3>${esc(o.label)}</h3><span class="state">${esc(o.category || '')}${o.category ? ', ' : ''}${r.sightings.length} sightings, ${esc(state)}</span></div>
-    <div class="right">${STATIC ? '' : `<button class="act" onclick="$('#dlg').close(); ask('where is my ${esc(o.label).replace(/'/g, "\\'")}')">Ask about it</button>`}<button class="close" onclick="$('#dlg').close()" aria-label="Close">×</button></div></div>`;
+    <div class="right">${STATIC ? '' : `<button class="act" onclick="$('#dlg').close(); ask('${esc(whereQ(o.label)).replace(/'/g, "\\'")}')">Ask about it</button>`}<button class="close" onclick="$('#dlg').close()" aria-label="Close">×</button></div></div>`;
   if (sess.length) {
     h += trailHTML(sess.map(s => ({place: s.place, when: s.when, session: s.session})), true);
     h += `<div class="frames">` + sess.map((s, i) => `<div class="frame"><img src="${s.overlay_url}" alt="" onclick="window.open('${s.overlay_url}')"><div class="cap"><b>${esc(phrase(s.place))}</b><span>${esc(s.session)} walk-through, ${esc(s.when)} — ${s.n} sighting${s.n === 1 ? '' : 's'}${i > 0 && sess[i - 1].place !== s.place ? ', moved' : (i > 0 ? ', same spot' : '')}</span></div></div>`).join('') + `</div>`;
